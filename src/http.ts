@@ -35,13 +35,30 @@ export const conflict = (message: string) => new HttpError(409, message);
  * config rather than being `*`, because `*` cannot be combined with
  * credentials and would let any site call the API with a user's token.
  */
+function isLocalDevOrigin(origin: string): boolean {
+  // Flutter web picks a random localhost port every run. In non-production
+  // we accept any http://localhost / 127.0.0.1 origin so local development
+  // works without constantly editing CORS_ALLOWED_ORIGINS.
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+    return url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+  } catch {
+    return false;
+  }
+}
+
 function applyCors(request: VercelRequest, response: VercelResponse): void {
   const origin = request.headers.origin;
   const allowed = env.corsAllowedOrigins;
 
-  if (typeof origin === 'string' && allowed.includes(origin)) {
-    response.setHeader('Access-Control-Allow-Origin', origin);
-    response.setHeader('Vary', 'Origin');
+  if (typeof origin === 'string') {
+    const permitted =
+      allowed.includes(origin) || (!env.isProduction && isLocalDevOrigin(origin));
+    if (permitted) {
+      response.setHeader('Access-Control-Allow-Origin', origin);
+      response.setHeader('Vary', 'Origin');
+    }
   }
 
   response.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');

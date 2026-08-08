@@ -7,6 +7,7 @@ relevant doc in the same change.
 
 | Doc | Covers |
 |---|---|
+| [HOW_TO_RUN_AND_DEPLOY.md](HOW_TO_RUN_AND_DEPLOY.md) | Run locally and deploy frontend + backend online |
 | [LOCAL_DEV.md](LOCAL_DEV.md) | Getting it running: env vars, migrations, `curl` examples, troubleshooting |
 | [API.md](API.md) | Every endpoint, request and response shape |
 

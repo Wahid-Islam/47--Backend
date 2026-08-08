@@ -34,10 +34,12 @@ export async function findUserById(id: string): Promise<PublicUser | null> {
  * both succeed, which a check-then-insert would allow.
  */
 export async function createUser(email: string, passwordHash: string): Promise<PublicUser | null> {
+  // Expression unique indexes need a parenthesised conflict target:
+  // ON CONFLICT ((lower(email))), not ON CONFLICT (lower(email)).
   return sqlOne<PublicUser>`
     INSERT INTO users (email, password_hash)
     VALUES (${email}, ${passwordHash})
-    ON CONFLICT (lower(email)) DO NOTHING
+    ON CONFLICT ((lower(email))) DO NOTHING
     RETURNING id, email
   `;
 }

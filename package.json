@@ -8,8 +8,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "vercel dev",
-    "migrate": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/migrate.ts",
+    "dev": "node --env-file-if-exists=.env --env-file-if-exists=.env.development.local --experimental-strip-types scripts/dev-server.ts",
+    "dev:vercel": "vercel dev",
+    "migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.development.local --experimental-strip-types scripts/migrate.ts",
+    "smoke": "node --env-file-if-exists=.env --env-file-if-exists=.env.development.local --experimental-strip-types scripts/smoke-db.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test \"test/**/*.test.ts\""
   },

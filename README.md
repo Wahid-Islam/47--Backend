@@ -38,18 +38,19 @@ health data.
 
 ## Quick start
 
-```bash
+```powershell
 npm install
-vercel env pull .env.development.local   # fetches DATABASE_URL from Neon
-npm run migrate                          # creates tables, seeds reference data
-npm run dev                              # http://localhost:3000
+# Put Neon credentials + JWT_SECRET in .env (see .env.example)
+npm run migrate          # creates tables, seeds clinics + baselines
+npm run dev              # http://localhost:3000  (no vercel login needed)
 ```
 
-You must also set `JWT_SECRET` — see [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md).
-
-```bash
-curl http://localhost:3000/api/health
+```powershell
+curl.exe http://localhost:3000/api/health
 ```
+
+Expect `"database":"ok"`. Full run + deploy guide:
+**[docs/HOW_TO_RUN_AND_DEPLOY.md](docs/HOW_TO_RUN_AND_DEPLOY.md)**.
 
 ## Endpoints
 
@@ -108,7 +109,5 @@ Start at [docs/README.md](docs/README.md).
 
 ## Status
 
-The API is complete and tested, but **not yet wired up to the frontend**.
-The Flutter app still runs on Supabase so it keeps working while this is
-deployed and verified. The cutover steps are in
-[docs/MIGRATION_FROM_SUPABASE.md](docs/MIGRATION_FROM_SUPABASE.md).
+The API is live against Neon locally, and the Flutter frontend is wired to
+it. Deploy steps: [docs/HOW_TO_RUN_AND_DEPLOY.md](docs/HOW_TO_RUN_AND_DEPLOY.md).
