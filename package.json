@@ -1,0 +1,28 @@
+{
+  "name": "mysihat-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "REST API for the mysihat health app, on Vercel functions and Neon Postgres.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "migrate": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/migrate.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test \"test/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "@vercel/node": "^3.2.29",
+    "pg": "^8.13.1",
+    "typescript": "^5.7.2",
+    "vercel": "^39.2.2"
+  }
+}
