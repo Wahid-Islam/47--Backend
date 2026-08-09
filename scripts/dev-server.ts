@@ -14,20 +14,19 @@ type Handler = (request: VercelRequest, response: VercelResponse) => Promise<voi
 
 async function loadHandlers(): Promise<Map<string, Handler>> {
   const modules: Array<[string, string]> = [
-    ['/api/health', '../api/health.js'],
     ['/api/auth/register', '../src/routes/auth/register.ts'],
     ['/api/auth/login', '../src/routes/auth/login.ts'],
     ['/api/auth/demo', '../src/routes/auth/demo.ts'],
     ['/api/auth/me', '../src/routes/auth/me.ts'],
-    ['/api/profile', '../api/profile.ts'],
-    ['/api/insights', '../api/insights.ts'],
+    ['/api/profile', '../src/routes/profile.ts'],
+    ['/api/insights', '../src/routes/insights.ts'],
     ['/api/habits/today', '../src/routes/habits/today.ts'],
     ['/api/habits/history', '../src/routes/habits/history.ts'],
     ['/api/recommendations/llm', '../src/routes/recommendations/rf.ts'],
     ['/api/recommendations/rf', '../src/routes/recommendations/rf.ts'],
-    ['/api/questionnaire', '../api/questionnaire.ts'],
-    ['/api/clinics', '../api/clinics.ts'],
-    ['/api/mortality-baselines', '../api/mortality-baselines.ts'],
+    ['/api/questionnaire', '../src/routes/questionnaire.ts'],
+    ['/api/clinics', '../src/routes/clinics.ts'],
+    ['/api/mortality-baselines', '../src/routes/mortality-baselines.ts'],
   ];
 
   const map = new Map<string, Handler>();
@@ -35,6 +34,34 @@ async function loadHandlers(): Promise<Map<string, Handler>> {
     const mod = (await import(file)) as { default: Handler };
     map.set(path, mod.default);
   }
+
+  // Match production health behaviour.
+  map.set('/api/health', async (_request, response) => {
+    const payload: Record<string, unknown> = { status: 'ok', database: 'skipped', time: null };
+    const databaseUrl = process.env.DATABASE_URL;
+    if (typeof databaseUrl === 'string' && databaseUrl.trim() !== '') {
+      try {
+        const { neon } = await import('@neondatabase/serverless');
+        const url = databaseUrl
+          .replace(/([?&])channel_binding=[^&]*&?/i, '$1')
+          .replace(/[?&]$/, '');
+        const sql = neon(url);
+        const rows = (await sql`SELECT now() AS now`) as Array<{ now: string }>;
+        payload.database = 'ok';
+        payload.time = rows[0]?.now ?? null;
+      } catch (error) {
+        payload.status = 'degraded';
+        payload.database = 'unreachable';
+        payload.error = error instanceof Error ? error.message : 'database error';
+      }
+    } else {
+      payload.status = 'degraded';
+      payload.database = 'unreachable';
+      payload.error = 'DATABASE_URL missing';
+    }
+    response.status(200).json(payload);
+  });
+
   return map;
 }
 

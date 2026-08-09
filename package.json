@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "node --import tsx --env-file-if-exists=.env --env-file-if-exists=.env.development.local scripts/dev-server.ts",
     "dev:vercel": "vercel dev",
+    "build:api": "node scripts/build-api.mjs",
     "migrate": "node --import tsx --env-file-if-exists=.env --env-file-if-exists=.env.development.local scripts/migrate.ts",
     "smoke": "node --import tsx --env-file-if-exists=.env --env-file-if-exists=.env.development.local scripts/smoke-db.ts",
     "typecheck": "tsc --noEmit",
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@types/pg": "^8.11.10",
+    "esbuild": "^0.25.12",
     "pg": "^8.13.1",
     "tsx": "^4.23.11",
     "typescript": "^5.7.2",

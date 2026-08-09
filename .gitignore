@@ -12,6 +12,8 @@ node_modules/
 # Build / cache
 dist/
 *.tsbuildinfo
+api/[...path].js
+api/\[...path\].js
 
 # Logs
 *.log
