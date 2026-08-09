@@ -1,8 +1,8 @@
-import { hashPassword, verifyPassword } from '../../src/auth/password.ts';
-import { signSessionToken } from '../../src/auth/tokens.ts';
-import { HttpError, withRoute } from '../../src/http.ts';
-import { findProfile, upsertProfile } from '../../src/repositories/profiles.ts';
-import { createUser, findUserByEmail } from '../../src/repositories/users.ts';
+import { hashPassword, verifyPassword } from '../../auth/password.ts';
+import { signSessionToken } from '../../auth/tokens.ts';
+import { HttpError, withRoute } from '../../http.ts';
+import { findProfile, upsertProfile } from '../../repositories/profiles.ts';
+import { createUser, findUserByEmail } from '../../repositories/users.ts';
 
 /**
  * POST /api/auth/demo

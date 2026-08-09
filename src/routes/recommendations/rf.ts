@@ -1,12 +1,12 @@
-import { HttpError, requireUser, withRoute } from '../../src/http.ts';
-import { findInsights } from '../../src/repositories/insights.ts';
-import { findProfile } from '../../src/repositories/profiles.ts';
-import type { ProfileContext } from '../../src/services/profileContext.ts';
+import { HttpError, requireUser, withRoute } from '../../http.ts';
+import { findInsights } from '../../repositories/insights.ts';
+import { findProfile } from '../../repositories/profiles.ts';
+import type { ProfileContext } from '../../services/profileContext.ts';
 import {
   habitMeta,
   reasonForHabit,
   recommendHabitsWithRandomForest,
-} from '../../src/services/randomForestRecommendations.ts';
+} from '../../services/randomForestRecommendations.ts';
 
 /**
  * GET /api/recommendations/rf

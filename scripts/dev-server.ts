@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Local HTTP server that runs the same handlers as Vercel, without needing
  * `vercel login`. Used by `npm run dev`.
  *
@@ -15,16 +15,16 @@ type Handler = (request: VercelRequest, response: VercelResponse) => Promise<voi
 async function loadHandlers(): Promise<Map<string, Handler>> {
   const modules: Array<[string, string]> = [
     ['/api/health', '../api/health.ts'],
-    ['/api/auth/register', '../api/auth/register.ts'],
-    ['/api/auth/login', '../api/auth/login.ts'],
-    ['/api/auth/demo', '../api/auth/demo.ts'],
-    ['/api/auth/me', '../api/auth/me.ts'],
+    ['/api/auth/register', '../src/routes/auth/register.ts'],
+    ['/api/auth/login', '../src/routes/auth/login.ts'],
+    ['/api/auth/demo', '../src/routes/auth/demo.ts'],
+    ['/api/auth/me', '../src/routes/auth/me.ts'],
     ['/api/profile', '../api/profile.ts'],
     ['/api/insights', '../api/insights.ts'],
-    ['/api/habits/today', '../api/habits/today.ts'],
-    ['/api/habits/history', '../api/habits/history.ts'],
-    ['/api/recommendations/llm', '../api/recommendations/llm.ts'],
-    ['/api/recommendations/rf', '../api/recommendations/rf.ts'],
+    ['/api/habits/today', '../src/routes/habits/today.ts'],
+    ['/api/habits/history', '../src/routes/habits/history.ts'],
+    ['/api/recommendations/llm', '../src/routes/recommendations/rf.ts'],
+    ['/api/recommendations/rf', '../src/routes/recommendations/rf.ts'],
     ['/api/questionnaire', '../api/questionnaire.ts'],
     ['/api/clinics', '../api/clinics.ts'],
     ['/api/mortality-baselines', '../api/mortality-baselines.ts'],

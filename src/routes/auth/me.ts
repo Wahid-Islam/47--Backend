@@ -1,6 +1,6 @@
-import { notFound, requireUser, withRoute } from '../../src/http.ts';
-import { findProfile } from '../../src/repositories/profiles.ts';
-import { findUserById } from '../../src/repositories/users.ts';
+import { notFound, requireUser, withRoute } from '../../http.ts';
+import { findProfile } from '../../repositories/profiles.ts';
+import { findUserById } from '../../repositories/users.ts';
 
 /**
  * GET /api/auth/me

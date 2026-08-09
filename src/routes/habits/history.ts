@@ -1,5 +1,5 @@
-import { requireUser, withRoute } from '../../src/http.ts';
-import { listRecentHabitLogs } from '../../src/repositories/habits.ts';
+import { requireUser, withRoute } from '../../http.ts';
+import { listRecentHabitLogs } from '../../repositories/habits.ts';
 
 /**
  * GET /api/habits/history?days=7

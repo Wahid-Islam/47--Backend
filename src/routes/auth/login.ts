@@ -1,9 +1,9 @@
-import { verifyPassword } from '../../src/auth/password.ts';
-import { signSessionToken } from '../../src/auth/tokens.ts';
-import { HttpError, jsonBody, withRoute } from '../../src/http.ts';
-import { createProfile, findProfile } from '../../src/repositories/profiles.ts';
-import { findUserByEmail } from '../../src/repositories/users.ts';
-import { requireEmail, requirePassword } from '../../src/validation.ts';
+import { verifyPassword } from '../../auth/password.ts';
+import { signSessionToken } from '../../auth/tokens.ts';
+import { HttpError, jsonBody, withRoute } from '../../http.ts';
+import { createProfile, findProfile } from '../../repositories/profiles.ts';
+import { findUserByEmail } from '../../repositories/users.ts';
+import { requireEmail, requirePassword } from '../../validation.ts';
 
 /**
  * POST /api/auth/login
