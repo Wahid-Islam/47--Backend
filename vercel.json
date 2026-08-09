@@ -1,9 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "build": {
+    "env": {
+      "VERCEL_EXPERIMENTAL_BACKENDS": "1"
+    }
+  },
   "functions": {
     "api/**/*.ts": {
       "maxDuration": 15,
-      "memory": 1024
+      "memory": 1024,
+      "includeFiles": "src/**"
     }
   },
   "rewrites": [{ "source": "/", "destination": "/api/health" }],

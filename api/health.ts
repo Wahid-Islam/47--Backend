@@ -1,28 +1,52 @@
-import { sqlOne } from '../src/db';
-import { withRoute } from '../src/http';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
  * GET /api/health
  *
- * Liveness plus a real database round trip, so a green response means Neon
- * is reachable and not just that the function booted.
+ * Kept dependency-light so a bad import graph cannot take down the
+ * liveness probe. Database check is best-effort.
  */
-export default withRoute(['GET'], async () => {
-  try {
-    const row = await sqlOne<{ now: string }>`SELECT now() AS now`;
-    return {
-      status: 'ok',
-      database: row === null ? 'unreachable' : 'ok',
-      time: row?.now ?? null,
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'database error';
-    console.error('health check failed:', message);
-    return {
-      status: 'degraded',
-      database: 'unreachable',
-      time: null,
-      error: message.includes('DATABASE_URL') ? 'DATABASE_URL missing or invalid' : 'database query failed',
-    };
+export default async function health(request: VercelRequest, response: VercelResponse): Promise<void> {
+  response.setHeader('Cache-Control', 'no-store');
+
+  if (request.method === 'OPTIONS') {
+    response.status(204).end();
+    return;
   }
-});
+  if (request.method !== 'GET') {
+    response.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const payload: Record<string, unknown> = {
+    status: 'ok',
+    database: 'skipped',
+    time: null,
+  };
+
+  const databaseUrl = process.env.DATABASE_URL;
+  if (typeof databaseUrl === 'string' && databaseUrl.trim() !== '') {
+    try {
+      const { neon } = await import('@neondatabase/serverless');
+      const url = databaseUrl
+        .replace(/([?&])channel_binding=[^&]*&?/i, '$1')
+        .replace(/[?&]$/, '');
+      const sql = neon(url);
+      const rows = (await sql`SELECT now() AS now`) as Array<{ now: string }>;
+      payload.database = 'ok';
+      payload.time = rows[0]?.now ?? null;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'database error';
+      console.error('health database check failed:', message);
+      payload.status = 'degraded';
+      payload.database = 'unreachable';
+      payload.error = 'database query failed';
+    }
+  } else {
+    payload.status = 'degraded';
+    payload.database = 'unreachable';
+    payload.error = 'DATABASE_URL missing';
+  }
+
+  response.status(200).json(payload);
+}

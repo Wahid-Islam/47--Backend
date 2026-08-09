@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "description": "REST API for the mysihat health app, on Vercel functions and Neon Postgres.",
-  "type": "module",
   "engines": {
     "node": ">=20"
   },
