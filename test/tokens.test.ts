@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it, before } from 'node:test';
 
-import { bearerToken, signSessionToken, verifySessionToken } from '../src/auth/tokens.ts';
+import { bearerToken, signSessionToken, verifySessionToken } from '../src/auth/tokens';
 
 describe('session tokens', () => {
   before(() => {

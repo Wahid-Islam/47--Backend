@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-import demo from '../../src/routes/auth/demo.ts';
-import login from '../../src/routes/auth/login.ts';
-import me from '../../src/routes/auth/me.ts';
-import register from '../../src/routes/auth/register.ts';
+import demo from '../../src/routes/auth/demo';
+import login from '../../src/routes/auth/login';
+import me from '../../src/routes/auth/me';
+import register from '../../src/routes/auth/register';
 
 type Handler = (request: VercelRequest, response: VercelResponse) => Promise<void> | void;
 

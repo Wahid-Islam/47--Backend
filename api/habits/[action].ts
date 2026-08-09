@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-import history from '../../src/routes/habits/history.ts';
-import today from '../../src/routes/habits/today.ts';
+import history from '../../src/routes/habits/history';
+import today from '../../src/routes/habits/today';
 
 type Handler = (request: VercelRequest, response: VercelResponse) => Promise<void> | void;
 

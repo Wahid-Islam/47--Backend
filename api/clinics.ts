@@ -1,5 +1,5 @@
-import { withRoute } from '../src/http.ts';
-import { listClinics } from '../src/repositories/reference.ts';
+import { withRoute } from '../src/http';
+import { listClinics } from '../src/repositories/reference';
 
 /**
  * GET /api/clinics

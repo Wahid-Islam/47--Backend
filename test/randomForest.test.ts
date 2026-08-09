@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   recommendHabitsWithRandomForest,
-} from '../src/services/randomForestRecommendations.ts';
+} from '../src/services/randomForestRecommendations';
 
 describe('recommendHabitsWithRandomForest', () => {
   it('returns 4 habits and ranks smoke-free highly for smokers', () => {

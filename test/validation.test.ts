@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { HttpError } from '../src/http.ts';
-import { parseProfileInput } from '../src/profileInput.ts';
-import { requireDateKey, requireEmail, requirePassword } from '../src/validation.ts';
+import { HttpError } from '../src/http';
+import { parseProfileInput } from '../src/profileInput';
+import { requireDateKey, requireEmail, requirePassword } from '../src/validation';
 
 const validProfile = {
   full_name: 'Lim Wei Jian',

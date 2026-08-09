@@ -1,4 +1,4 @@
-import { sql } from '../db.ts';
+import { sql } from '../db';
 
 export interface ClinicRow {
   id: string;

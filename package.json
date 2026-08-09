@@ -8,12 +8,12 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --env-file-if-exists=.env.development.local --experimental-strip-types scripts/dev-server.ts",
+    "dev": "node --import tsx --env-file-if-exists=.env --env-file-if-exists=.env.development.local scripts/dev-server.ts",
     "dev:vercel": "vercel dev",
-    "migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.development.local --experimental-strip-types scripts/migrate.ts",
-    "smoke": "node --env-file-if-exists=.env --env-file-if-exists=.env.development.local --experimental-strip-types scripts/smoke-db.ts",
+    "migrate": "node --import tsx --env-file-if-exists=.env --env-file-if-exists=.env.development.local scripts/migrate.ts",
+    "smoke": "node --import tsx --env-file-if-exists=.env --env-file-if-exists=.env.development.local scripts/smoke-db.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test \"test/**/*.test.ts\"",
+    "test": "node --import tsx --test test/**/*.test.ts",
     "train:rf": "python ml/train_random_forest.py"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
     "@types/pg": "^8.11.10",
     "@vercel/node": "^5.9.7",
     "pg": "^8.13.1",
+    "tsx": "^4.23.11",
     "typescript": "^5.7.2",
     "vercel": "^39.2.2"
   }

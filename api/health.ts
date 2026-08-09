@@ -1,5 +1,5 @@
-import { sqlOne } from '../src/db.ts';
-import { withRoute } from '../src/http.ts';
+import { sqlOne } from '../src/db';
+import { withRoute } from '../src/http';
 
 /**
  * GET /api/health

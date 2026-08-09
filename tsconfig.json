@@ -5,16 +5,15 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "types": ["node"],
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
   },
   "include": ["api/**/*.ts", "src/**/*.ts", "scripts/**/*.ts", "test/**/*.ts"]
 }

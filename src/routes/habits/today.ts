@@ -1,6 +1,6 @@
-import { jsonBody, requireUser, withRoute } from '../../http.ts';
-import { getOrCreateHabitLog, setCompletedHabitIds } from '../../repositories/habits.ts';
-import { requireDateKey, requireStringArray } from '../../validation.ts';
+import { jsonBody, requireUser, withRoute } from '../../http';
+import { getOrCreateHabitLog, setCompletedHabitIds } from '../../repositories/habits';
+import { requireDateKey, requireStringArray } from '../../validation';
 
 /**
  * GET /api/habits/today?date=YYYY-MM-DD -> the day's log, created if absent

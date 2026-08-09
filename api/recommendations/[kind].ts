@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-import rf from '../../src/routes/recommendations/rf.ts';
+import rf from '../../src/routes/recommendations/rf';
 
 type Handler = (request: VercelRequest, response: VercelResponse) => Promise<void> | void;
 

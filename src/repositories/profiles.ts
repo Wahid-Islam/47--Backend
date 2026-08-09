@@ -1,4 +1,4 @@
-import { sql, sqlOne } from '../db.ts';
+import { sql, sqlOne } from '../db';
 
 /**
  * Row shape returned to clients.

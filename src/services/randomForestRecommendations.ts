@@ -1,10 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import type { ProfileContext } from './profileContext';
+import modelJson from '../data/random_forest_habits.json';
 
-import type { ProfileContext } from './profileContext.ts';
-
-export type { ProfileContext } from './profileContext.ts';
+export type { ProfileContext } from './profileContext';
 
 interface TreeJson {
   children_left: number[];
@@ -49,24 +46,8 @@ const HABIT_META: Record<string, { title: string; title_bm: string; category: st
   },
 };
 
-let cachedModel: ForestModelJson | null = null;
-
 function loadModel(): ForestModelJson {
-  if (cachedModel !== null) return cachedModel;
-  const here = dirname(fileURLToPath(import.meta.url));
-  const candidates = [
-    join(here, '../data/random_forest_habits.json'),
-    join(process.cwd(), 'src/data/random_forest_habits.json'),
-  ];
-  for (const path of candidates) {
-    try {
-      cachedModel = JSON.parse(readFileSync(path, 'utf8')) as ForestModelJson;
-      return cachedModel;
-    } catch {
-      // try next path
-    }
-  }
-  throw new Error('Recommendation model file not found (src/data/random_forest_habits.json)');
+  return modelJson as ForestModelJson;
 }
 
 function predictTree(tree: TreeJson, features: number[]): number {

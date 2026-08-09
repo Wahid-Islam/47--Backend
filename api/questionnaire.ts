@@ -1,6 +1,6 @@
-import { jsonBody, requireUser, withRoute } from '../src/http.ts';
-import { insertQuestionnaireResponse } from '../src/repositories/questionnaire.ts';
-import { requireObject } from '../src/validation.ts';
+import { jsonBody, requireUser, withRoute } from '../src/http';
+import { insertQuestionnaireResponse } from '../src/repositories/questionnaire';
+import { requireObject } from '../src/validation';
 
 /**
  * POST /api/questionnaire

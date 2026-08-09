@@ -1,4 +1,4 @@
-import { sqlOne } from '../db.ts';
+import { sqlOne } from '../db';
 
 export interface QuestionnaireResponseRow {
   id: string;

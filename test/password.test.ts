@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { hashPassword, verifyPassword } from '../src/auth/password.ts';
+import { hashPassword, verifyPassword } from '../src/auth/password';
 
 describe('password hashing', () => {
   it('accepts the correct password', async () => {

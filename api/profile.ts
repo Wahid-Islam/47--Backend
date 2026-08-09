@@ -1,6 +1,6 @@
-import { jsonBody, requireUser, withRoute } from '../src/http.ts';
-import { parseProfileInput } from '../src/profileInput.ts';
-import { findProfile, upsertProfile } from '../src/repositories/profiles.ts';
+import { jsonBody, requireUser, withRoute } from '../src/http';
+import { parseProfileInput } from '../src/profileInput';
+import { findProfile, upsertProfile } from '../src/repositories/profiles';
 
 /**
  * GET  /api/profile  -> the caller's profile, or null if they have none yet

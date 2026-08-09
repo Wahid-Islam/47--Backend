@@ -1,9 +1,9 @@
-import { hashPassword } from '../../auth/password.ts';
-import { signSessionToken } from '../../auth/tokens.ts';
-import { conflict, jsonBody, withRoute } from '../../http.ts';
-import { createProfile } from '../../repositories/profiles.ts';
-import { createUser } from '../../repositories/users.ts';
-import { requireEmail, requirePassword, requireString } from '../../validation.ts';
+import { hashPassword } from '../../auth/password';
+import { signSessionToken } from '../../auth/tokens';
+import { conflict, jsonBody, withRoute } from '../../http';
+import { createProfile } from '../../repositories/profiles';
+import { createUser } from '../../repositories/users';
+import { requireEmail, requirePassword, requireString } from '../../validation';
 
 /**
  * POST /api/auth/register

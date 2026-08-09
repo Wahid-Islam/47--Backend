@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-import { env } from './env.ts';
-import { bearerToken, verifySessionToken, type SessionClaims } from './auth/tokens.ts';
+import { env } from './env';
+import { bearerToken, verifySessionToken, type SessionClaims } from './auth/tokens';
 
 /**
  * An error with an HTTP status attached, so handlers can `throw` for any

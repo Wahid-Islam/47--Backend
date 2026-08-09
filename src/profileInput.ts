@@ -1,5 +1,5 @@
-import { badRequest } from './http.ts';
-import type { ProfileInput } from './repositories/profiles.ts';
+import { badRequest } from './http';
+import type { ProfileInput } from './repositories/profiles';
 import {
   optionalString,
   requireBoolean,
@@ -8,7 +8,7 @@ import {
   requireNumber,
   requireString,
   requireStringArray,
-} from './validation.ts';
+} from './validation';
 
 export const GENDERS = ['male', 'female', 'other'] as const;
 export const ACTIVITY_LEVELS = ['low', 'moderate', 'high'] as const;

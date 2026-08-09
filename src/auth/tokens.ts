@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 
-import { env } from '../env.ts';
+import { env } from '../env';
 
 export interface SessionClaims {
   /** The user's id. Every user-scoped query filters on this. */

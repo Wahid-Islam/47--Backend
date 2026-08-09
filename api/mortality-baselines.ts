@@ -1,5 +1,5 @@
-import { withRoute } from '../src/http.ts';
-import { listMortalityBaselines } from '../src/repositories/reference.ts';
+import { withRoute } from '../src/http';
+import { listMortalityBaselines } from '../src/repositories/reference';
 
 /**
  * GET /api/mortality-baselines

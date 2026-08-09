@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 
-import { env } from './env.ts';
+import { env } from './env';
 
 /**
  * Neon HTTP query function.

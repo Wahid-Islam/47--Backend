@@ -1,6 +1,6 @@
-import { jsonBody, requireUser, withRoute } from '../src/http.ts';
-import { findInsights, upsertInsights } from '../src/repositories/insights.ts';
-import { optionalString, requireObject } from '../src/validation.ts';
+import { jsonBody, requireUser, withRoute } from '../src/http';
+import { findInsights, upsertInsights } from '../src/repositories/insights';
+import { optionalString, requireObject } from '../src/validation';
 
 /**
  * GET /api/insights -> { payload, generated_at } or null
