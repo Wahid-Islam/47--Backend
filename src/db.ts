@@ -15,7 +15,12 @@ import { env } from './env.ts';
 let cached: ReturnType<typeof neon> | undefined;
 
 function client(): ReturnType<typeof neon> {
-  cached ??= neon(env.databaseUrl);
+  // Neon’s HTTP driver does not use PG channel binding; that query param
+  // (common in dashboard copy-paste URLs) can break serverless connects.
+  const url = env.databaseUrl
+    .replace(/([?&])channel_binding=[^&]*&?/i, '$1')
+    .replace(/[?&]$/, '');
+  cached ??= neon(url);
   return cached;
 }
 

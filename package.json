@@ -23,7 +23,7 @@
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@types/pg": "^8.11.10",
-    "@vercel/node": "^3.2.29",
+    "@vercel/node": "^5.9.7",
     "pg": "^8.13.1",
     "typescript": "^5.7.2",
     "vercel": "^39.2.2"

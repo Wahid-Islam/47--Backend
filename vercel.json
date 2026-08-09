@@ -2,10 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
     "api/**/*.ts": {
-      "runtime": "@vercel/node@3.2.29",
-      "maxDuration": 15
+      "maxDuration": 15,
+      "memory": 1024
     }
   },
+  "rewrites": [{ "source": "/", "destination": "/api/health" }],
   "headers": [
     {
       "source": "/api/(.*)",
