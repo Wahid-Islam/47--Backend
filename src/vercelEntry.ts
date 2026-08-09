@@ -65,17 +65,26 @@ const routes: Record<string, Handler> = {
 };
 
 function pathnameOf(request: VercelRequest): string {
-  const rawPath = request.query.path;
-  if (typeof rawPath === 'string' && rawPath.length > 0) {
-    return `/api/${rawPath.replace(/^\/+/, '')}`;
+  // Prefer rewrite query (?path=auth/register), then catch-all, then URL.
+  const q = request.query.path;
+  if (typeof q === 'string' && q.length > 0) {
+    return `/api/${q.replace(/^\/+/, '')}`;
   }
-  if (Array.isArray(rawPath) && rawPath.length > 0) {
-    return `/api/${rawPath.join('/')}`;
+  if (Array.isArray(q) && q.length > 0) {
+    return `/api/${q.join('/')}`;
+  }
+
+  const headerPath =
+    (typeof request.headers['x-forwarded-uri'] === 'string' && request.headers['x-forwarded-uri']) ||
+    (typeof request.headers['x-invoke-path'] === 'string' && request.headers['x-invoke-path']) ||
+    '';
+  if (headerPath.startsWith('/api')) {
+    return headerPath.split('?')[0] ?? headerPath;
   }
 
   const url = request.url ?? '/';
   const pathOnly = url.split('?')[0] ?? '/';
-  if (pathOnly === '/api' || pathOnly === '/api/') return '/api/health';
+  if (pathOnly === '/api' || pathOnly === '/api/' || pathOnly === '/') return '/api/health';
   return pathOnly;
 }
 

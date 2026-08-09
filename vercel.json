@@ -3,12 +3,16 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build:api",
   "functions": {
-    "api/**/*.js": {
+    "api/index.js": {
       "maxDuration": 15,
       "memory": 1024
     }
   },
-  "rewrites": [{ "source": "/", "destination": "/api/health" }],
+  "rewrites": [
+    { "source": "/", "destination": "/api?path=health" },
+    { "source": "/api", "destination": "/api?path=health" },
+    { "source": "/api/(.*)", "destination": "/api?path=$1" }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
