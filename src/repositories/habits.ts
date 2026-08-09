@@ -47,3 +47,15 @@ export async function setCompletedHabitIds(
   if (row === null) throw new Error('Failed to save habit log');
   return row;
 }
+
+/** Recent habit logs for streak / day-by-day risk progress (newest first). */
+export async function listRecentHabitLogs(userId: string, days: number): Promise<HabitLogRow[]> {
+  const limit = Math.max(1, Math.min(days, 30));
+  return sql<HabitLogRow>`
+    SELECT id, user_id, to_char(log_date, 'YYYY-MM-DD') AS log_date, completed_habit_ids
+    FROM habit_logs
+    WHERE user_id = ${userId}
+      AND log_date >= (CURRENT_DATE - (${limit}::int - 1))
+    ORDER BY log_date DESC
+  `;
+}

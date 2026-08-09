@@ -13,7 +13,8 @@
     "migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.development.local --experimental-strip-types scripts/migrate.ts",
     "smoke": "node --env-file-if-exists=.env --env-file-if-exists=.env.development.local --experimental-strip-types scripts/smoke-db.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test \"test/**/*.test.ts\""
+    "test": "node --experimental-strip-types --test \"test/**/*.test.ts\"",
+    "train:rf": "python ml/train_random_forest.py"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",

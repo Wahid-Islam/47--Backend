@@ -13,7 +13,11 @@ const validProfile = {
   activity_level: 'low',
   diet_habit: 'unhealthy',
   smoking: true,
+  height_cm: 170,
+  weight_kg: 79.2,
   bmi: 27.4,
+  alcohol: 'occasional',
+  sleep_hours: 5.5,
   high_blood_pressure: true,
   onboarding_complete: true,
   locale: 'en',
@@ -39,21 +43,33 @@ describe('profile validation', () => {
     assert.equal(parsed.fullName, 'Lim Wei Jian');
     assert.equal(parsed.age, 48);
     assert.equal(parsed.bmi, 27.4);
+    assert.equal(parsed.heightCm, 170);
+    assert.equal(parsed.alcohol, 'occasional');
+    assert.equal(parsed.sleepHours, 5.5);
     assert.equal(parsed.email, 'fallback@example.com');
     assert.deepEqual(parsed.activeActionIds, ['walk_20']);
   });
 
-  it('enforces the same age and BMI bounds as the Flutter form', () => {
+  it('derives BMI from height and weight when bmi is omitted', () => {
+    const { bmi: _omit, ...withoutBmi } = validProfile;
+    const parsed = parseProfileInput(withoutBmi, null);
+
+    assert.ok(parsed.bmi > 27 && parsed.bmi < 28);
+  });
+
+  it('enforces age and body-measure bounds', () => {
     rejects({ ...validProfile, age: 17 }, 'age');
     rejects({ ...validProfile, age: 91 }, 'age');
-    rejects({ ...validProfile, bmi: 9 }, 'bmi');
-    rejects({ ...validProfile, bmi: 61 }, 'bmi');
+    rejects({ ...validProfile, height_cm: 90 }, 'height_cm');
+    rejects({ ...validProfile, weight_kg: 20 }, 'weight_kg');
+    rejects({ ...validProfile, sleep_hours: 2 }, 'sleep_hours');
   });
 
   it('rejects values outside the allowed enums', () => {
     rejects({ ...validProfile, gender: 'unknown' }, 'gender');
     rejects({ ...validProfile, activity_level: 'extreme' }, 'activity_level');
     rejects({ ...validProfile, diet_habit: 'keto' }, 'diet_habit');
+    rejects({ ...validProfile, alcohol: 'daily' }, 'alcohol');
     rejects({ ...validProfile, locale: 'fr' }, 'locale');
   });
 
