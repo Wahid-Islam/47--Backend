@@ -14,7 +14,7 @@ type Handler = (request: VercelRequest, response: VercelResponse) => Promise<voi
 
 async function loadHandlers(): Promise<Map<string, Handler>> {
   const modules: Array<[string, string]> = [
-    ['/api/health', '../api/health.ts'],
+    ['/api/health', '../api/health.js'],
     ['/api/auth/register', '../src/routes/auth/register.ts'],
     ['/api/auth/login', '../src/routes/auth/login.ts'],
     ['/api/auth/demo', '../src/routes/auth/demo.ts'],
