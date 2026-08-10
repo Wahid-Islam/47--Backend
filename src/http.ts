@@ -48,13 +48,28 @@ function isLocalDevOrigin(origin: string): boolean {
   }
 }
 
+function isAllowedFrontendOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== 'https:') return false;
+    const host = url.hostname;
+    if (host === 'mysihat-47.vercel.app' || host === '47-frontend.vercel.app') return true;
+    // Vercel preview deployments for the frontend project.
+    return host.endsWith('.vercel.app') && host.includes('47-frontend');
+  } catch {
+    return false;
+  }
+}
+
 function applyCors(request: VercelRequest, response: VercelResponse): void {
   const origin = request.headers.origin;
   const allowed = env.corsAllowedOrigins;
 
   if (typeof origin === 'string') {
     const permitted =
-      allowed.includes(origin) || (!env.isProduction && isLocalDevOrigin(origin));
+      allowed.includes(origin) ||
+      isAllowedFrontendOrigin(origin) ||
+      (!env.isProduction && isLocalDevOrigin(origin));
     if (permitted) {
       response.setHeader('Access-Control-Allow-Origin', origin);
       response.setHeader('Vary', 'Origin');

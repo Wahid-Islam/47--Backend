@@ -6726,7 +6726,10 @@ var env = {
   },
   get corsAllowedOrigins() {
     const configured = optional("CORS_ALLOWED_ORIGINS", "").split(",").map((origin) => origin.trim()).filter((origin) => origin !== "");
-    const defaults = ["https://47-frontend.vercel.app"];
+    const defaults = [
+      "https://47-frontend.vercel.app",
+      "https://mysihat-47.vercel.app"
+    ];
     return [.../* @__PURE__ */ new Set([...configured, ...defaults])];
   },
   get isProduction() {
@@ -6791,11 +6794,22 @@ function isLocalDevOrigin(origin) {
     return false;
   }
 }
+function isAllowedFrontendOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== "https:") return false;
+    const host = url.hostname;
+    if (host === "mysihat-47.vercel.app" || host === "47-frontend.vercel.app") return true;
+    return host.endsWith(".vercel.app") && host.includes("47-frontend");
+  } catch {
+    return false;
+  }
+}
 function applyCors(request, response) {
   const origin = request.headers.origin;
   const allowed = env.corsAllowedOrigins;
   if (typeof origin === "string") {
-    const permitted = allowed.includes(origin) || !env.isProduction && isLocalDevOrigin(origin);
+    const permitted = allowed.includes(origin) || isAllowedFrontendOrigin(origin) || !env.isProduction && isLocalDevOrigin(origin);
     if (permitted) {
       response.setHeader("Access-Control-Allow-Origin", origin);
       response.setHeader("Vary", "Origin");

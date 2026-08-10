@@ -52,8 +52,11 @@ export const env = {
       .split(',')
       .map((origin) => origin.trim())
       .filter((origin) => origin !== '');
-    // Keep the production Flutter host working even if the env var was omitted.
-    const defaults = ['https://47-frontend.vercel.app'];
+    // Keep production Flutter hosts working even if the env var was omitted.
+    const defaults = [
+      'https://47-frontend.vercel.app',
+      'https://mysihat-47.vercel.app',
+    ];
     return [...new Set([...configured, ...defaults])];
   },
 
