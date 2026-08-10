@@ -2,14 +2,7 @@ import { jsonBody, requireUser, withRoute } from '../http';
 import { insertQuestionnaireResponse } from '../repositories/questionnaire';
 import { requireObject } from '../validation';
 
-/**
- * POST /api/questionnaire
- * Body: { answers: { ... } }
- *
- * Appends one immutable snapshot of a questionnaire submission (US 1.1).
- * There is no update or delete: the whole point of the table is that
- * historical answers are never overwritten, unlike the mutable profile row.
- */
+/** POST /api/questionnaire */
 export default withRoute(['POST'], async (request, response) => {
   const { userId } = await requireUser(request);
   const answers = requireObject(jsonBody(request), 'answers');

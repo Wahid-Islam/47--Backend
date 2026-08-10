@@ -2,14 +2,7 @@ import { jsonBody, requireUser, withRoute } from '../../http';
 import { getOrCreateHabitLog, setCompletedHabitIds } from '../../repositories/habits';
 import { requireDateKey, requireStringArray } from '../../validation';
 
-/**
- * GET /api/habits/today?date=YYYY-MM-DD -> the day's log, created if absent
- * PUT /api/habits/today                 -> body { date?, completed_habit_ids }
- *
- * `date` is optional and defaults to today in UTC. It is a parameter rather
- * than being derived server-side because the user's calendar day is the one
- * that matters, and their timezone is only known to the client.
- */
+/** GET /api/habits/today?date=YYYY-MM-DD -> the day's log, created if absent */
 export default withRoute(['GET', 'PUT'], async (request) => {
   const { userId } = await requireUser(request);
 

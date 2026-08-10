@@ -1,13 +1,4 @@
-"""
-Train a Random Forest that ranks daily habits from questionnaire features.
-
-Run from repo:
-  cd backend/ml
-  python -m pip install -r requirements.txt
-  python train_random_forest.py
-
-Writes: ../src/data/random_forest_habits.json
-"""
+"""Train a Random Forest that ranks daily habits from questionnaire features."""
 
 from __future__ import annotations
 

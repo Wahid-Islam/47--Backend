@@ -2,14 +2,7 @@ import { jsonBody, requireUser, withRoute } from '../http';
 import { parseProfileInput } from '../profileInput';
 import { findProfile, upsertProfile } from '../repositories/profiles';
 
-/**
- * GET  /api/profile  -> the caller's profile, or null if they have none yet
- * PUT  /api/profile  -> replaces the caller's profile
- *
- * Both are scoped by the user id in the verified token. There is no
- * `/api/profile/:id`, by design: no endpoint should be able to address
- * another user's profile at all.
- */
+/** GET  /api/profile  -> the caller's profile, or null if they have none yet */
 export default withRoute(['GET', 'PUT'], async (request) => {
   const { userId, email } = await requireUser(request);
 

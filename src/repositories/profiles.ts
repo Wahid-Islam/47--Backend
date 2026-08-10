@@ -1,12 +1,5 @@
 import { sql, sqlOne } from '../db';
 
-/**
- * Row shape returned to clients.
- *
- * Keys are snake_case on purpose so the Flutter models parse responses
- * unchanged. Numeric columns are cast to float8 because the Neon driver
- * returns Postgres `numeric` as a string.
- */
 export interface ProfileRow {
   id: string;
   email: string | null;
@@ -67,7 +60,6 @@ export async function findProfile(userId: string): Promise<ProfileRow | null> {
   return rows[0] ?? null;
 }
 
-/** Creates the profile row that accompanies a new user. */
 export async function createProfile(
   userId: string,
   email: string,
@@ -88,12 +80,6 @@ export async function createProfile(
   return row;
 }
 
-/**
- * Replaces the caller's profile.
- *
- * `userId` comes from the verified token, never from the request body, so a
- * caller cannot write to someone else's row by sending a different id.
- */
 export async function upsertProfile(userId: string, input: ProfileInput): Promise<ProfileRow> {
   const row = await sqlOne<ProfileRow>`
     INSERT INTO profiles (

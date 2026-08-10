@@ -15,14 +15,6 @@ export async function findInsights(userId: string): Promise<InsightsRow | null> 
   return rows[0] ?? null;
 }
 
-/**
- * Replaces the caller's insights row.
- *
- * The payload is the risk engine's output, which still runs on-device in
- * the Flutter app -- this API only persists it. `payload` is stored as
- * `jsonb`, so new fields can be added without a migration, which is how the
- * Epic 1.0 comparison fields were introduced.
- */
 export async function upsertInsights(
   userId: string,
   payload: Record<string, unknown>,

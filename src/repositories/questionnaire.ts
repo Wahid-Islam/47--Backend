@@ -6,11 +6,6 @@ export interface QuestionnaireResponseRow {
   submitted_at: string;
 }
 
-/**
- * Appends one questionnaire snapshot. Insert-only by design -- there is no
- * update or delete for this table, because it is the audit trail of what the
- * user actually answered each time.
- */
 export async function insertQuestionnaireResponse(
   userId: string,
   answers: Record<string, unknown>,

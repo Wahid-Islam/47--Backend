@@ -3,17 +3,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { env } from './env';
 import { bearerToken, verifySessionToken, type SessionClaims } from './auth/tokens';
 
-/**
- * An error with an HTTP status attached, so handlers can `throw` for any
- * failure and `withRoute` turns it into the right response.
- */
 export class HttpError extends Error {
   readonly status: number;
   readonly details: unknown;
 
-  // Written out rather than using constructor parameter properties, which
-  // Node's --experimental-strip-types rejects: it only erases types, and
-  // parameter properties would need real code generated.
   constructor(status: number, message: string, details?: unknown) {
     super(message);
     this.name = 'HttpError';
@@ -27,18 +20,7 @@ export const unauthorized = (message = 'Authentication required') => new HttpErr
 export const notFound = (message = 'Not found') => new HttpError(404, message);
 export const conflict = (message: string) => new HttpError(409, message);
 
-/**
- * Applies CORS headers for an allow-listed origin.
- *
- * A Flutter web app is a browser client on a different origin to the API, so
- * without this every request fails preflight. The allow-list comes from
- * config rather than being `*`, because `*` cannot be combined with
- * credentials and would let any site call the API with a user's token.
- */
 function isLocalDevOrigin(origin: string): boolean {
-  // Flutter web picks a random localhost port every run. In non-production
-  // we accept any http://localhost / 127.0.0.1 origin so local development
-  // works without constantly editing CORS_ALLOWED_ORIGINS.
   try {
     const url = new URL(origin);
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
@@ -83,13 +65,6 @@ function applyCors(request: VercelRequest, response: VercelResponse): void {
 
 type Handler = (request: VercelRequest, response: VercelResponse) => Promise<unknown>;
 
-/**
- * Wraps a handler with CORS, preflight handling, method allow-listing and
- * error translation, so no individual route repeats any of it.
- *
- * A handler either returns a value (serialised as JSON with 200) or throws
- * an `HttpError`.
- */
 export function withRoute(methods: string[], handler: Handler) {
   return async (request: VercelRequest, response: VercelResponse): Promise<void> => {
     applyCors(request, response);
@@ -118,22 +93,12 @@ export function withRoute(methods: string[], handler: Handler) {
         return;
       }
 
-      // Unexpected failure. Log the real reason for the operator, but never
-      // return it -- stack traces and driver errors leak schema details.
       console.error('Unhandled error in API handler:', error);
       response.status(500).json({ error: 'Internal server error' });
     }
   };
 }
 
-/**
- * Requires a valid session and returns its claims.
- *
- * This is the replacement for Supabase's Row Level Security. The returned
- * `userId` is the *only* acceptable source of identity for a query -- a
- * user id read from the request body or a query parameter would let any
- * caller read or overwrite another user's data.
- */
 export async function requireUser(request: VercelRequest): Promise<SessionClaims> {
   const token = bearerToken(request.headers.authorization);
   if (token === null) throw unauthorized('Missing bearer token');
@@ -144,7 +109,6 @@ export async function requireUser(request: VercelRequest): Promise<SessionClaims
   return claims;
 }
 
-/** Parses a JSON body, tolerating Vercel having already parsed it. */
 export function jsonBody(request: VercelRequest): Record<string, unknown> {
   const body = request.body;
 

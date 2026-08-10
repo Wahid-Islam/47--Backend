@@ -1,10 +1,3 @@
-/**
- * Environment access, validated once at module load.
- *
- * Reading `process.env` inline all over the codebase means a missing
- * variable shows up as a confusing runtime failure deep in a request.
- * Requiring it here turns that into a clear error on first import.
- */
 
 function required(name: string): string {
   const value = process.env[name];
@@ -34,9 +27,6 @@ export const env = {
 
   get jwtSecret(): string {
     const secret = required('JWT_SECRET');
-    // 32 bytes is the minimum sensible key length for HS256. A short
-    // secret is brute-forceable, which would let anyone mint valid
-    // sessions for any user.
     if (secret.length < 32) {
       throw new Error('JWT_SECRET must be at least 32 characters long.');
     }

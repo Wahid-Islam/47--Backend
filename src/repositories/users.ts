@@ -11,7 +11,6 @@ export interface PublicUser {
   email: string;
 }
 
-/** Looks a user up by email, case-insensitively. */
 export async function findUserByEmail(email: string): Promise<UserRow | null> {
   const rows = await sql<UserRow>`
     SELECT id, email, password_hash
@@ -26,16 +25,7 @@ export async function findUserById(id: string): Promise<PublicUser | null> {
   return rows[0] ?? null;
 }
 
-/**
- * Creates a user, or returns null if the email is already taken.
- *
- * `ON CONFLICT DO NOTHING` against the case-insensitive unique index makes
- * this atomic: two simultaneous registrations for the same email cannot
- * both succeed, which a check-then-insert would allow.
- */
 export async function createUser(email: string, passwordHash: string): Promise<PublicUser | null> {
-  // Expression unique indexes need a parenthesised conflict target:
-  // ON CONFLICT ((lower(email))), not ON CONFLICT (lower(email)).
   return sqlOne<PublicUser>`
     INSERT INTO users (email, password_hash)
     VALUES (${email}, ${passwordHash})

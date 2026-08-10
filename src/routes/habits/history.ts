@@ -1,10 +1,7 @@
 import { requireUser, withRoute } from '../../http';
 import { listRecentHabitLogs } from '../../repositories/habits';
 
-/**
- * GET /api/habits/history?days=7
- * Recent habit logs used for streak / day-by-day risk drop.
- */
+/** GET /api/habits/history?days=7 */
 export default withRoute(['GET'], async (request) => {
   const { userId } = await requireUser(request);
   const raw = request.query.days;

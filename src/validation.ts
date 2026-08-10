@@ -1,14 +1,5 @@
 import { badRequest } from './http';
 
-/**
- * Small hand-rolled validators.
- *
- * Deliberately not a schema library: the API has one non-trivial shape
- * (the profile), and these keep the dependency surface of a health-data
- * service small. Every validator throws a 400 with a message naming the
- * field, which is what the Flutter forms surface to the user.
- */
-
 export function requireString(
   body: Record<string, unknown>,
   field: string,
@@ -33,8 +24,6 @@ export function optionalString(body: Record<string, unknown>, field: string): st
 
 export function requireEmail(body: Record<string, unknown>, field = 'email'): string {
   const value = requireString(body, field, { max: 320 });
-  // Intentionally permissive. Strict RFC-compliant email regexes reject
-  // valid addresses; real validation is sending mail to it.
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
     throw badRequest('"email" must be a valid email address');
   }
@@ -45,8 +34,6 @@ export function requirePassword(body: Record<string, unknown>, field = 'password
   const value = body[field];
   if (typeof value !== 'string') throw badRequest('"password" must be a string');
   if (value.length < 6) throw badRequest('"password" must be at least 6 characters');
-  // Upper bound guards against a huge input being fed into scrypt as a
-  // cheap way to burn server CPU.
   if (value.length > 200) throw badRequest('"password" must be at most 200 characters');
   return value;
 }

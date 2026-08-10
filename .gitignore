@@ -12,6 +12,9 @@ node_modules/
 # Build / cache
 dist/
 *.tsbuildinfo
+ml/__pycache__/
+ml/rf_evaluation_report.json
+*.pyc
 
 # Logs
 *.log

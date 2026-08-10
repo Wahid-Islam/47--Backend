@@ -8,10 +8,7 @@ import {
   recommendHabitsWithRandomForest,
 } from '../../services/randomForestRecommendations';
 
-/**
- * GET /api/recommendations/rf
- * Personalised daily habits from the on-device Random Forest model.
- */
+/** GET /api/recommendations/rf */
 export default withRoute(['GET'], async (request) => {
   const { userId } = await requireUser(request);
   const profile = await findProfile(userId);

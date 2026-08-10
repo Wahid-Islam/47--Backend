@@ -1,4 +1,3 @@
-/** Shared profile features used by the recommendation model. */
 export interface ProfileContext {
   age: number;
   gender: string;

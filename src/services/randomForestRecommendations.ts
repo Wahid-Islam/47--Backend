@@ -71,7 +71,6 @@ function predictForest(trees: TreeJson[], features: number[]): number {
   return sum / trees.length;
 }
 
-/** Encode a profile into the feature vector the forest was trained on. */
 export function profileToFeatures(profile: ProfileContext, featureNames: string[]): number[] {
   const activity = profile.activityLevel;
   const diet = profile.dietHabit;
@@ -101,7 +100,6 @@ export function profileToFeatures(profile: ProfileContext, featureNames: string[
   return featureNames.map((name) => values[name] ?? 0);
 }
 
-/** Rank habits from the trained model and return the top 4. */
 export function recommendHabitsWithRandomForest(
   profile: ProfileContext,
   limit = 4,
@@ -168,7 +166,6 @@ export function habitMeta(
   );
 }
 
-/** User-facing reasons (no model names). */
 export function reasonForHabit(id: string, profile: ProfileContext): { en: string; bm: string } {
   switch (id) {
     case 'walk_20':

@@ -16,12 +16,6 @@ export const DIET_HABITS = ['unhealthy', 'average', 'healthy'] as const;
 export const ALCOHOL_LEVELS = ['none', 'occasional', 'regular'] as const;
 export const LOCALES = ['en', 'bm'] as const;
 
-/**
- * Validates a profile payload from the questionnaire.
- *
- * Note that `id` is ignored if present -- the row written is always the
- * caller's own, keyed by the id in their token.
- */
 export function parseProfileInput(body: Record<string, unknown>, email: string | null): ProfileInput {
   const heightCm = requireNumber(body, 'height_cm', { min: 100, max: 250 });
   const weightKg = requireNumber(body, 'weight_kg', { min: 30, max: 250 });
