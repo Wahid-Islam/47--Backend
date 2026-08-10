@@ -36,7 +36,7 @@ export default withRoute(['GET'], async (request) => {
 
   const rf = recommendHabitsWithRandomForest(context, 4);
   const habits = rf.habits.map((h) => {
-    const meta = habitMeta(h.id);
+    const meta = habitMeta(h.id, context);
     const reason = reasonForHabit(h.id, context);
     return {
       id: h.id,

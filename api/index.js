@@ -7339,7 +7339,11 @@ var HABIT_META = {
   no_sugary_drink: { title: "Skip sugary drinks", title_bm: "Elak minuman bergula", category: "DIET" },
   brown_rice_meal: { title: "Choose brown rice once", title_bm: "Pilih nasi perang sekali", category: "DIET" },
   smoke_free_day: { title: "Stay smoke-free today", title_bm: "Kekal tanpa asap hari ini", category: "SMOKING" },
-  sleep_7: { title: "Sleep at least 7 hours", title_bm: "Tidur sekurang-kurangnya 7 jam", category: "SLEEP" },
+  sleep_7: {
+    title: "Aim for 7\u20138 hours of sleep",
+    title_bm: "Sasar 7\u20138 jam tidur",
+    category: "SLEEP"
+  },
   check_bp_reminder: {
     title: "Plan BP screening visit",
     title_bm: "Rancang lawatan saringan BP",
@@ -7408,7 +7412,28 @@ function recommendHabitsWithRandomForest(profile, limit = 4) {
     metrics: model.metrics
   };
 }
-function habitMeta(id) {
+function habitMeta(id, profile) {
+  if (id === "sleep_7" && profile !== void 0) {
+    if (profile.sleepHours > 8) {
+      return {
+        title: "Aim for 7\u20138 hours of sleep",
+        title_bm: "Sasar 7\u20138 jam tidur",
+        category: "SLEEP"
+      };
+    }
+    if (profile.sleepHours < 7) {
+      return {
+        title: "Sleep at least 7 hours",
+        title_bm: "Tidur sekurang-kurangnya 7 jam",
+        category: "SLEEP"
+      };
+    }
+    return {
+      title: "Keep a steady 7\u20138 hour sleep window",
+      title_bm: "Kekalkan jendela tidur 7\u20138 jam",
+      category: "SLEEP"
+    };
+  }
   return HABIT_META[id] ?? {
     title: id,
     title_bm: id,
@@ -7428,9 +7453,21 @@ function reasonForHabit(id, profile) {
         bm: "Profil merokok anda menjadikan hari tanpa asap salah satu keutamaan hari ini."
       };
     case "sleep_7":
+      if (profile.sleepHours > 8) {
+        return {
+          en: `You reported ${profile.sleepHours}h. Health Age risk is lowest around 7\u20138 hours, so aim a bit shorter tonight.`,
+          bm: `Anda melaporkan ${profile.sleepHours}j. Risiko Umur Kesihatan paling rendah sekitar 7\u20138 jam, jadi sasarkan sedikit lebih pendek malam ini.`
+        };
+      }
+      if (profile.sleepHours < 7) {
+        return {
+          en: `You reported ${profile.sleepHours}h. Aim for at least 7 hours tonight to support recovery.`,
+          bm: `Anda melaporkan ${profile.sleepHours}j. Sasarkan sekurang-kurangnya 7 jam malam ini untuk pemulihan.`
+        };
+      }
       return {
-        en: `Your sleep (${profile.sleepHours}h) suggests protecting a steady sleep window tonight.`,
-        bm: `Tidur anda (${profile.sleepHours}j) mencadangkan melindungi jendela tidur yang konsisten malam ini.`
+        en: `Your sleep (${profile.sleepHours}h) is in a healthier window \u2014 protect that consistency tonight.`,
+        bm: `Tidur anda (${profile.sleepHours}j) dalam julat lebih sihat \u2014 lindungi konsistensi itu malam ini.`
       };
     case "no_sugary_drink":
     case "brown_rice_meal":
@@ -7479,7 +7516,7 @@ var rf_default = withRoute(["GET"], async (request) => {
   }
   const rf = recommendHabitsWithRandomForest(context, 4);
   const habits = rf.habits.map((h) => {
-    const meta = habitMeta(h.id);
+    const meta = habitMeta(h.id, context);
     const reason = reasonForHabit(h.id, context);
     return {
       id: h.id,
