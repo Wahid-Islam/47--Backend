@@ -14,7 +14,7 @@ export const GENDERS = ['male', 'female', 'other'] as const;
 export const ACTIVITY_LEVELS = ['low', 'moderate', 'high'] as const;
 export const DIET_HABITS = ['unhealthy', 'average', 'healthy'] as const;
 export const ALCOHOL_LEVELS = ['none', 'occasional', 'regular'] as const;
-export const LOCALES = ['en', 'bm'] as const;
+export const LOCALES = ['en', 'bm', 'zh'] as const;
 
 export function parseProfileInput(body: Record<string, unknown>, email: string | null): ProfileInput {
   const heightCm = requireNumber(body, 'height_cm', { min: 100, max: 250 });

@@ -39,10 +39,12 @@ export default withRoute(['GET'], async (request) => {
       id: h.id,
       title: meta.title,
       title_bm: meta.title_bm,
+      title_zh: meta.title_zh,
       category: meta.category,
       score: h.score,
       reason: reason.en,
       reason_bm: reason.bm,
+      reason_zh: reason.zh,
     };
   });
 
@@ -51,5 +53,6 @@ export default withRoute(['GET'], async (request) => {
     coach_note: 'Your 4 actions are personalised from your questionnaire answers and health profile.',
     coach_note_bm:
       '4 tindakan anda diperibadikan daripada jawapan soal selidik dan profil kesihatan anda.',
+    coach_note_zh: '您的 4 项行动根据问卷回答与健康资料个性化生成。',
   };
 });

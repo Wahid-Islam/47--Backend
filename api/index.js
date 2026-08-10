@@ -6771,9 +6771,6 @@ function bearerToken(header) {
 var HttpError = class extends Error {
   status;
   details;
-  // Written out rather than using constructor parameter properties, which
-  // Node's --experimental-strip-types rejects: it only erases types, and
-  // parameter properties would need real code generated.
   constructor(status, message2, details) {
     super(message2);
     this.name = "HttpError";
@@ -7267,7 +7264,7 @@ var GENDERS = ["male", "female", "other"];
 var ACTIVITY_LEVELS = ["low", "moderate", "high"];
 var DIET_HABITS = ["unhealthy", "average", "healthy"];
 var ALCOHOL_LEVELS = ["none", "occasional", "regular"];
-var LOCALES = ["en", "bm"];
+var LOCALES = ["en", "bm", "zh"];
 function parseProfileInput(body, email) {
   const heightCm = requireNumber(body, "height_cm", { min: 100, max: 250 });
   const weightKg = requireNumber(body, "weight_kg", { min: 30, max: 250 });
@@ -7334,19 +7331,46 @@ var random_forest_habits_default = { version: 1, algorithm: "sklearn.ensemble.Ra
 
 // src/services/randomForestRecommendations.ts
 var HABIT_META = {
-  walk_20: { title: "Walk 20 minutes", title_bm: "Berjalan 20 minit", category: "ACTIVITY" },
-  drink_water: { title: "Drink 8 glasses of water", title_bm: "Minum 8 gelas air", category: "DIET" },
-  no_sugary_drink: { title: "Skip sugary drinks", title_bm: "Elak minuman bergula", category: "DIET" },
-  brown_rice_meal: { title: "Choose brown rice once", title_bm: "Pilih nasi perang sekali", category: "DIET" },
-  smoke_free_day: { title: "Stay smoke-free today", title_bm: "Kekal tanpa asap hari ini", category: "SMOKING" },
+  walk_20: {
+    title: "Walk 20 minutes",
+    title_bm: "Berjalan 20 minit",
+    title_zh: "\u6B65\u884C 20 \u5206\u949F",
+    category: "ACTIVITY"
+  },
+  drink_water: {
+    title: "Drink 8 glasses of water",
+    title_bm: "Minum 8 gelas air",
+    title_zh: "\u559D 8 \u676F\u6C34",
+    category: "DIET"
+  },
+  no_sugary_drink: {
+    title: "Skip sugary drinks",
+    title_bm: "Elak minuman bergula",
+    title_zh: "\u4ECA\u5929\u4E0D\u559D\u542B\u7CD6\u996E\u6599",
+    category: "DIET"
+  },
+  brown_rice_meal: {
+    title: "Choose brown rice once",
+    title_bm: "Pilih nasi perang sekali",
+    title_zh: "\u9009\u4E00\u6B21\u7CD9\u7C73\u996D",
+    category: "DIET"
+  },
+  smoke_free_day: {
+    title: "Stay smoke-free today",
+    title_bm: "Kekal tanpa asap hari ini",
+    title_zh: "\u4ECA\u5929\u4FDD\u6301\u65E0\u70DF",
+    category: "SMOKING"
+  },
   sleep_7: {
     title: "Aim for 7\u20138 hours of sleep",
     title_bm: "Sasar 7\u20138 jam tidur",
+    title_zh: "\u4E89\u53D6\u7761\u8DB3 7\u20138 \u5C0F\u65F6",
     category: "SLEEP"
   },
   check_bp_reminder: {
     title: "Plan BP screening visit",
     title_bm: "Rancang lawatan saringan BP",
+    title_zh: "\u8BA1\u5212\u8840\u538B\u7B5B\u67E5\u5C31\u8BCA",
     category: "SCREENING"
   }
 };
@@ -7418,6 +7442,7 @@ function habitMeta(id, profile) {
       return {
         title: "Aim for 7\u20138 hours of sleep",
         title_bm: "Sasar 7\u20138 jam tidur",
+        title_zh: "\u4E89\u53D6\u7761\u8DB3 7\u20138 \u5C0F\u65F6",
         category: "SLEEP"
       };
     }
@@ -7425,18 +7450,21 @@ function habitMeta(id, profile) {
       return {
         title: "Sleep at least 7 hours",
         title_bm: "Tidur sekurang-kurangnya 7 jam",
+        title_zh: "\u81F3\u5C11\u7761 7 \u5C0F\u65F6",
         category: "SLEEP"
       };
     }
     return {
       title: "Keep a steady 7\u20138 hour sleep window",
       title_bm: "Kekalkan jendela tidur 7\u20138 jam",
+      title_zh: "\u4FDD\u6301\u7A33\u5B9A\u7684 7\u20138 \u5C0F\u65F6\u7761\u7720\u7A97\u53E3",
       category: "SLEEP"
     };
   }
   return HABIT_META[id] ?? {
     title: id,
     title_bm: id,
+    title_zh: id,
     category: "HABIT"
   };
 }
@@ -7445,50 +7473,59 @@ function reasonForHabit(id, profile) {
     case "walk_20":
       return {
         en: `Based on your ${profile.activityLevel} activity level, a daily walk is a strong next step.`,
-        bm: `Berdasarkan tahap aktiviti ${profile.activityLevel} anda, berjalan harian ialah langkah seterusnya yang kuat.`
+        bm: `Berdasarkan tahap aktiviti ${profile.activityLevel} anda, berjalan harian ialah langkah seterusnya yang kuat.`,
+        zh: `\u6839\u636E\u60A8\u76EE\u524D\u7684\u6D3B\u52A8\u6C34\u5E73\uFF08${profile.activityLevel}\uFF09\uFF0C\u6BCF\u65E5\u6B65\u884C\u662F\u5F88\u5408\u9002\u7684\u4E0B\u4E00\u6B65\u3002`
       };
     case "smoke_free_day":
       return {
         en: "Your smoking profile makes a smoke-free day one of today\u2019s top priorities.",
-        bm: "Profil merokok anda menjadikan hari tanpa asap salah satu keutamaan hari ini."
+        bm: "Profil merokok anda menjadikan hari tanpa asap salah satu keutamaan hari ini.",
+        zh: "\u6839\u636E\u60A8\u7684\u5438\u70DF\u8D44\u6599\uFF0C\u65E0\u70DF\u65E5\u662F\u4ECA\u5929\u7684\u4F18\u5148\u4E8B\u9879\u4E4B\u4E00\u3002"
       };
     case "sleep_7":
       if (profile.sleepHours > 8) {
         return {
           en: `You reported ${profile.sleepHours}h. Health Age risk is lowest around 7\u20138 hours, so aim a bit shorter tonight.`,
-          bm: `Anda melaporkan ${profile.sleepHours}j. Risiko Umur Kesihatan paling rendah sekitar 7\u20138 jam, jadi sasarkan sedikit lebih pendek malam ini.`
+          bm: `Anda melaporkan ${profile.sleepHours}j. Risiko Umur Kesihatan paling rendah sekitar 7\u20138 jam, jadi sasarkan sedikit lebih pendek malam ini.`,
+          zh: `\u60A8\u62A5\u544A\u7761\u7720 ${profile.sleepHours} \u5C0F\u65F6\u3002\u5065\u5EB7\u5E74\u9F84\u76F8\u5173\u98CE\u9669\u5728\u7EA6 7\u20138 \u5C0F\u65F6\u6700\u4F4E\uFF0C\u4ECA\u665A\u53EF\u7565\u77ED\u4E00\u4E9B\u3002`
         };
       }
       if (profile.sleepHours < 7) {
         return {
           en: `You reported ${profile.sleepHours}h. Aim for at least 7 hours tonight to support recovery.`,
-          bm: `Anda melaporkan ${profile.sleepHours}j. Sasarkan sekurang-kurangnya 7 jam malam ini untuk pemulihan.`
+          bm: `Anda melaporkan ${profile.sleepHours}j. Sasarkan sekurang-kurangnya 7 jam malam ini untuk pemulihan.`,
+          zh: `\u60A8\u62A5\u544A\u7761\u7720 ${profile.sleepHours} \u5C0F\u65F6\u3002\u4ECA\u665A\u4E89\u53D6\u81F3\u5C11 7 \u5C0F\u65F6\u4EE5\u652F\u6301\u6062\u590D\u3002`
         };
       }
       return {
         en: `Your sleep (${profile.sleepHours}h) is in a healthier window \u2014 protect that consistency tonight.`,
-        bm: `Tidur anda (${profile.sleepHours}j) dalam julat lebih sihat \u2014 lindungi konsistensi itu malam ini.`
+        bm: `Tidur anda (${profile.sleepHours}j) dalam julat lebih sihat \u2014 lindungi konsistensi itu malam ini.`,
+        zh: `\u60A8\u7684\u7761\u7720\uFF08${profile.sleepHours} \u5C0F\u65F6\uFF09\u5904\u4E8E\u8F83\u5065\u5EB7\u533A\u95F4 \u2014 \u4ECA\u665A\u7EE7\u7EED\u4FDD\u6301\u3002`
       };
     case "no_sugary_drink":
     case "brown_rice_meal":
       return {
         en: `Your diet habit (${profile.dietHabit}) points to one healthier food choice today.`,
-        bm: `Tabiat pemakanan anda (${profile.dietHabit}) mencadangkan satu pilihan makanan lebih sihat hari ini.`
+        bm: `Tabiat pemakanan anda (${profile.dietHabit}) mencadangkan satu pilihan makanan lebih sihat hari ini.`,
+        zh: `\u6839\u636E\u60A8\u7684\u996E\u98DF\u4E60\u60EF\uFF08${profile.dietHabit}\uFF09\uFF0C\u4ECA\u5929\u505A\u4E00\u6B21\u66F4\u5065\u5EB7\u7684\u98DF\u7269\u9009\u62E9\u3002`
       };
     case "check_bp_reminder":
       return {
         en: "Your age and heart-risk context make blood-pressure awareness useful this week.",
-        bm: "Umur dan konteks risiko jantung anda menjadikan kesedaran tekanan darah berguna minggu ini."
+        bm: "Umur dan konteks risiko jantung anda menjadikan kesedaran tekanan darah berguna minggu ini.",
+        zh: "\u7ED3\u5408\u60A8\u7684\u5E74\u9F84\u4E0E\u5FC3\u810F\u98CE\u9669\u80CC\u666F\uFF0C\u672C\u5468\u5173\u6CE8\u8840\u538B\u5F88\u6709\u5E2E\u52A9\u3002"
       };
     case "drink_water":
       return {
         en: "Steady hydration supports energy and helps replace sugary drinks.",
-        bm: "Penghidratan yang baik menyokong tenaga dan membantu mengganti minuman bergula."
+        bm: "Penghidratan yang baik menyokong tenaga dan membantu mengganti minuman bergula.",
+        zh: "\u7A33\u5B9A\u8865\u6C34\u6709\u52A9\u4E8E\u7EF4\u6301\u7CBE\u529B\uFF0C\u5E76\u5E2E\u52A9\u66FF\u4EE3\u542B\u7CD6\u996E\u6599\u3002"
       };
     default:
       return {
         en: "Selected from your questionnaire answers to personalise today\u2019s plan.",
-        bm: "Dipilih daripada jawapan soal selidik anda untuk memperibadikan pelan hari ini."
+        bm: "Dipilih daripada jawapan soal selidik anda untuk memperibadikan pelan hari ini.",
+        zh: "\u6839\u636E\u60A8\u7684\u95EE\u5377\u56DE\u7B54\u4E2A\u6027\u5316\u9009\u51FA\uFF0C\u7528\u4E8E\u4ECA\u5929\u7684\u8BA1\u5212\u3002"
       };
   }
 }
@@ -7522,16 +7559,19 @@ var rf_default = withRoute(["GET"], async (request) => {
       id: h.id,
       title: meta.title,
       title_bm: meta.title_bm,
+      title_zh: meta.title_zh,
       category: meta.category,
       score: h.score,
       reason: reason.en,
-      reason_bm: reason.bm
+      reason_bm: reason.bm,
+      reason_zh: reason.zh
     };
   });
   return {
     habits,
     coach_note: "Your 4 actions are personalised from your questionnaire answers and health profile.",
-    coach_note_bm: "4 tindakan anda diperibadikan daripada jawapan soal selidik dan profil kesihatan anda."
+    coach_note_bm: "4 tindakan anda diperibadikan daripada jawapan soal selidik dan profil kesihatan anda.",
+    coach_note_zh: "\u60A8\u7684 4 \u9879\u884C\u52A8\u6839\u636E\u95EE\u5377\u56DE\u7B54\u4E0E\u5065\u5EB7\u8D44\u6599\u4E2A\u6027\u5316\u751F\u6210\u3002"
   };
 });
 

@@ -73,6 +73,11 @@ describe('profile validation', () => {
     rejects({ ...validProfile, locale: 'fr' }, 'locale');
   });
 
+  it('accepts zh locale', () => {
+    const parsed = parseProfileInput({ ...validProfile, locale: 'zh' }, null);
+    assert.equal(parsed.locale, 'zh');
+  });
+
   it('requires the mandatory fields', () => {
     const { full_name: _omitted, ...withoutName } = validProfile;
     rejects(withoutName, 'full_name');
