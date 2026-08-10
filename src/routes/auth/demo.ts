@@ -24,6 +24,7 @@ const DEMO_PROFILE = {
   alcohol: 'occasional',
   sleepHours: 5.5,
   highBloodPressure: true,
+  diabetes: false,
   onboardingComplete: true,
   locale: 'en',
   activeActionIds: ['bp_screening', 'walk_20', 'swap_drinks'],

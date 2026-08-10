@@ -6896,7 +6896,7 @@ async function findProfile(userId) {
     SELECT id, email, full_name, age, gender, state, activity_level, diet_habit,
            smoking, height_cm::float8 AS height_cm, weight_kg::float8 AS weight_kg,
            bmi::float8 AS bmi, alcohol, sleep_hours::float8 AS sleep_hours,
-           high_blood_pressure, onboarding_complete, locale, active_action_ids
+           high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
     FROM profiles
     WHERE id = ${userId}
   `;
@@ -6912,7 +6912,7 @@ async function createProfile(userId, email, fullName) {
     RETURNING id, email, full_name, age, gender, state, activity_level, diet_habit,
               smoking, height_cm::float8 AS height_cm, weight_kg::float8 AS weight_kg,
               bmi::float8 AS bmi, alcohol, sleep_hours::float8 AS sleep_hours,
-              high_blood_pressure, onboarding_complete, locale, active_action_ids
+              high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
   `;
   if (row === null) throw new Error("Failed to create profile");
   return row;
@@ -6922,12 +6922,12 @@ async function upsertProfile(userId, input) {
     INSERT INTO profiles (
       id, email, full_name, age, gender, state, activity_level, diet_habit,
       smoking, height_cm, weight_kg, bmi, alcohol, sleep_hours,
-      high_blood_pressure, onboarding_complete, locale, active_action_ids
+      high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
     ) VALUES (
       ${userId}, ${input.email}, ${input.fullName}, ${input.age}, ${input.gender},
       ${input.state}, ${input.activityLevel}, ${input.dietHabit}, ${input.smoking},
       ${input.heightCm}, ${input.weightKg}, ${input.bmi}, ${input.alcohol}, ${input.sleepHours},
-      ${input.highBloodPressure}, ${input.onboardingComplete},
+      ${input.highBloodPressure}, ${input.diabetes}, ${input.onboardingComplete},
       ${input.locale}, ${input.activeActionIds}
     )
     ON CONFLICT (id) DO UPDATE SET
@@ -6945,13 +6945,14 @@ async function upsertProfile(userId, input) {
       alcohol             = EXCLUDED.alcohol,
       sleep_hours         = EXCLUDED.sleep_hours,
       high_blood_pressure = EXCLUDED.high_blood_pressure,
+      diabetes            = EXCLUDED.diabetes,
       onboarding_complete = EXCLUDED.onboarding_complete,
       locale              = EXCLUDED.locale,
       active_action_ids   = EXCLUDED.active_action_ids
     RETURNING id, email, full_name, age, gender, state, activity_level, diet_habit,
               smoking, height_cm::float8 AS height_cm, weight_kg::float8 AS weight_kg,
               bmi::float8 AS bmi, alcohol, sleep_hours::float8 AS sleep_hours,
-              high_blood_pressure, onboarding_complete, locale, active_action_ids
+              high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
   `;
   if (row === null) throw new Error("Failed to save profile");
   return row;
@@ -6997,6 +6998,7 @@ var DEMO_PROFILE = {
   alcohol: "occasional",
   sleepHours: 5.5,
   highBloodPressure: true,
+  diabetes: false,
   onboardingComplete: true,
   locale: "en",
   activeActionIds: ["bp_screening", "walk_20", "swap_drinks"]
@@ -7291,6 +7293,7 @@ function parseProfileInput(body, email) {
     alcohol: requireEnum(body, "alcohol", ALCOHOL_LEVELS),
     sleepHours: requireNumber(body, "sleep_hours", { min: 3, max: 14 }),
     highBloodPressure: body.high_blood_pressure === void 0 ? false : requireBoolean(body, "high_blood_pressure"),
+    diabetes: body.diabetes === void 0 ? false : requireBoolean(body, "diabetes"),
     onboardingComplete: requireBoolean(body, "onboarding_complete"),
     locale: requireEnum(body, "locale", LOCALES),
     activeActionIds: requireStringArray(body, "active_action_ids")

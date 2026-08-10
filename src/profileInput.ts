@@ -52,6 +52,7 @@ export function parseProfileInput(body: Record<string, unknown>, email: string |
     sleepHours: requireNumber(body, 'sleep_hours', { min: 3, max: 14 }),
     highBloodPressure:
       body.high_blood_pressure === undefined ? false : requireBoolean(body, 'high_blood_pressure'),
+    diabetes: body.diabetes === undefined ? false : requireBoolean(body, 'diabetes'),
     onboardingComplete: requireBoolean(body, 'onboarding_complete'),
     locale: requireEnum(body, 'locale', LOCALES),
     activeActionIds: requireStringArray(body, 'active_action_ids'),

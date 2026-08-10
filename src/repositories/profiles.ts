@@ -16,6 +16,7 @@ export interface ProfileRow {
   alcohol: string;
   sleep_hours: number;
   high_blood_pressure: boolean;
+  diabetes: boolean;
   onboarding_complete: boolean;
   locale: string;
   active_action_ids: string[];
@@ -36,6 +37,7 @@ export interface ProfileInput {
   alcohol: string;
   sleepHours: number;
   highBloodPressure: boolean;
+  diabetes: boolean;
   onboardingComplete: boolean;
   locale: string;
   activeActionIds: string[];
@@ -45,7 +47,7 @@ const RETURNING = `
   id, email, full_name, age, gender, state, activity_level, diet_habit,
   smoking, height_cm::float8 AS height_cm, weight_kg::float8 AS weight_kg,
   bmi::float8 AS bmi, alcohol, sleep_hours::float8 AS sleep_hours,
-  high_blood_pressure, onboarding_complete, locale, active_action_ids
+  high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
 `;
 
 export async function findProfile(userId: string): Promise<ProfileRow | null> {
@@ -53,7 +55,7 @@ export async function findProfile(userId: string): Promise<ProfileRow | null> {
     SELECT id, email, full_name, age, gender, state, activity_level, diet_habit,
            smoking, height_cm::float8 AS height_cm, weight_kg::float8 AS weight_kg,
            bmi::float8 AS bmi, alcohol, sleep_hours::float8 AS sleep_hours,
-           high_blood_pressure, onboarding_complete, locale, active_action_ids
+           high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
     FROM profiles
     WHERE id = ${userId}
   `;
@@ -74,7 +76,7 @@ export async function createProfile(
     RETURNING id, email, full_name, age, gender, state, activity_level, diet_habit,
               smoking, height_cm::float8 AS height_cm, weight_kg::float8 AS weight_kg,
               bmi::float8 AS bmi, alcohol, sleep_hours::float8 AS sleep_hours,
-              high_blood_pressure, onboarding_complete, locale, active_action_ids
+              high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
   `;
   if (row === null) throw new Error('Failed to create profile');
   return row;
@@ -85,12 +87,12 @@ export async function upsertProfile(userId: string, input: ProfileInput): Promis
     INSERT INTO profiles (
       id, email, full_name, age, gender, state, activity_level, diet_habit,
       smoking, height_cm, weight_kg, bmi, alcohol, sleep_hours,
-      high_blood_pressure, onboarding_complete, locale, active_action_ids
+      high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
     ) VALUES (
       ${userId}, ${input.email}, ${input.fullName}, ${input.age}, ${input.gender},
       ${input.state}, ${input.activityLevel}, ${input.dietHabit}, ${input.smoking},
       ${input.heightCm}, ${input.weightKg}, ${input.bmi}, ${input.alcohol}, ${input.sleepHours},
-      ${input.highBloodPressure}, ${input.onboardingComplete},
+      ${input.highBloodPressure}, ${input.diabetes}, ${input.onboardingComplete},
       ${input.locale}, ${input.activeActionIds}
     )
     ON CONFLICT (id) DO UPDATE SET
@@ -108,13 +110,14 @@ export async function upsertProfile(userId: string, input: ProfileInput): Promis
       alcohol             = EXCLUDED.alcohol,
       sleep_hours         = EXCLUDED.sleep_hours,
       high_blood_pressure = EXCLUDED.high_blood_pressure,
+      diabetes            = EXCLUDED.diabetes,
       onboarding_complete = EXCLUDED.onboarding_complete,
       locale              = EXCLUDED.locale,
       active_action_ids   = EXCLUDED.active_action_ids
     RETURNING id, email, full_name, age, gender, state, activity_level, diet_habit,
               smoking, height_cm::float8 AS height_cm, weight_kg::float8 AS weight_kg,
               bmi::float8 AS bmi, alcohol, sleep_hours::float8 AS sleep_hours,
-              high_blood_pressure, onboarding_complete, locale, active_action_ids
+              high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
   `;
   if (row === null) throw new Error('Failed to save profile');
   return row;
