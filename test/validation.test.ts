@@ -84,9 +84,26 @@ describe('profile validation', () => {
   it('enforces age and body-measure bounds', () => {
     rejects({ ...validProfile, age: 17 }, 'age');
     rejects({ ...validProfile, age: 91 }, 'age');
-    rejects({ ...validProfile, height_cm: 90 }, 'height_cm');
-    rejects({ ...validProfile, weight_kg: 20 }, 'weight_kg');
+    rejects({ ...validProfile, height_cm: 100 }, 'height_cm');
+    rejects({ ...validProfile, height_cm: 230 }, 'height_cm');
+    rejects({ ...validProfile, weight_kg: 30 }, 'weight_kg');
+    rejects({ ...validProfile, weight_kg: 210 }, 'weight_kg');
     rejects({ ...validProfile, sleep_hours: 2 }, 'sleep_hours');
+  });
+
+  it('rejects height/weight pairs that produce an unrealistic BMI', () => {
+    // Short + heavy → BMI far above 60
+    rejects({ ...validProfile, height_cm: 120, weight_kg: 180 }, 'unrealistic BMI');
+  });
+
+  it('accepts a valid height/weight pair within tightened bounds', () => {
+    const parsed = parseProfileInput(
+      { ...validProfile, height_cm: 165, weight_kg: 65 },
+      null,
+    );
+    assert.equal(parsed.heightCm, 165);
+    assert.equal(parsed.weightKg, 65);
+    assert.ok(parsed.bmi >= 10 && parsed.bmi <= 60);
   });
 
   it('rejects values outside the allowed enums', () => {

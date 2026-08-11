@@ -27,13 +27,15 @@ export function parseProfileInput(
   email: string | null,
   options: ParseProfileOptions = {},
 ): ProfileInput {
-  const heightCm = requireNumber(body, 'height_cm', { min: 100, max: 250 });
-  const weightKg = requireNumber(body, 'weight_kg', { min: 30, max: 250 });
+  const heightCm = requireNumber(body, 'height_cm', { min: 120, max: 220 });
+  const weightKg = requireNumber(body, 'weight_kg', { min: 35, max: 200 });
   const metres = heightCm / 100;
   const bmi = Math.round((weightKg / (metres * metres)) * 10) / 10;
 
   if (bmi < 10 || bmi > 60) {
-    throw badRequest('"height_cm" and "weight_kg" produce a BMI outside 10–60');
+    throw badRequest(
+      'Height and weight produce an unrealistic BMI (must be between 10 and 60).',
+    );
   }
 
   if (body.high_blood_pressure === undefined) {
