@@ -1,15 +1,17 @@
 import { jsonBody, requireUser, withRoute } from '../http';
-import { insertQuestionnaireResponse } from '../repositories/questionnaire';
-import { upsertProfileFromQuestionnaire } from '../services/questionnaireToProfile';
+import { saveQuestionnaireAndProfile } from '../services/questionnaireToProfile';
 import { requireObject } from '../validation';
 
-/** POST /api/questionnaire — updates the profile, then stores answers as an audit row. */
+/** POST /api/questionnaire — validates answers, upserts profile, and audits in one DB write. */
 export default withRoute(['POST'], async (request, response) => {
   const { userId, email } = await requireUser(request);
   const answers = requireObject(jsonBody(request), 'answers');
 
-  await upsertProfileFromQuestionnaire(userId, email, answers);
-  const row = await insertQuestionnaireResponse(userId, answers);
+  const result = await saveQuestionnaireAndProfile(userId, email, answers);
 
-  response.status(201).json(row);
+  response.status(201).json({
+    id: result.questionnaireId,
+    user_id: userId,
+    submitted_at: result.submittedAt,
+  });
 });

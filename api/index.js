@@ -5446,6 +5446,9 @@ __export(vercelEntry_exports, {
 });
 module.exports = __toCommonJS(vercelEntry_exports);
 
+// src/routes/auth/demo.ts
+var import_node_crypto7 = require("node:crypto");
+
 // src/auth/password.ts
 var import_node_crypto = require("node:crypto");
 function scryptAsync(password, salt, keylen, options) {
@@ -6796,8 +6799,7 @@ function isAllowedFrontendOrigin(origin) {
     const url = new URL(origin);
     if (url.protocol !== "https:") return false;
     const host = url.hostname;
-    if (host === "mysihat-47.vercel.app" || host === "47-frontend.vercel.app") return true;
-    return /^47-frontend-[a-z0-9-]+\.vercel\.app$/i.test(host);
+    return host === "mysihat-47.vercel.app" || host === "47-frontend.vercel.app";
   } catch {
     return false;
   }
@@ -6875,22 +6877,34 @@ function jsonBody(request) {
 
 // src/rateLimit.ts
 var buckets = /* @__PURE__ */ new Map();
+var MAX_KEYS = 5e3;
 function clientKey(request, scope) {
   const forwarded = request.headers["x-forwarded-for"];
   const realIp = request.headers["x-real-ip"];
   const ip = typeof forwarded === "string" ? forwarded.split(",")[0]?.trim() : Array.isArray(forwarded) ? forwarded[0] : typeof realIp === "string" ? realIp : "unknown";
   return `${scope}:${ip || "unknown"}`;
 }
+function pruneExpired(bucket, now, windowMs) {
+  bucket.timestamps = bucket.timestamps.filter((t) => now - t < windowMs);
+}
 function assertRateLimit(request, scope, { limit, windowMs }) {
   const key = clientKey(request, scope);
   const now = Date.now();
   const bucket = buckets.get(key) ?? { timestamps: [] };
-  bucket.timestamps = bucket.timestamps.filter((t) => now - t < windowMs);
+  pruneExpired(bucket, now, windowMs);
   if (bucket.timestamps.length >= limit) {
+    buckets.set(key, bucket);
     throw new HttpError(429, "Too many requests. Please try again shortly.");
   }
   bucket.timestamps.push(now);
   buckets.set(key, bucket);
+  if (buckets.size > MAX_KEYS) {
+    for (const [k, b] of buckets) {
+      pruneExpired(b, now, windowMs);
+      if (b.timestamps.length === 0) buckets.delete(k);
+      if (buckets.size <= MAX_KEYS * 0.8) break;
+    }
+  }
 }
 
 // src/db.ts
@@ -6944,13 +6958,13 @@ async function setCompletedHabitIds(userId, logDate, completedHabitIds) {
 async function resetHabitLog(userId, logDate) {
   return setCompletedHabitIds(userId, logDate, []);
 }
-async function listRecentHabitLogs(userId, days) {
+async function listRecentHabitLogs(userId, days, today) {
   const limit = Math.max(1, Math.min(days, 30));
   return sql`
     SELECT id, user_id, to_char(log_date, 'YYYY-MM-DD') AS log_date, completed_habit_ids
     FROM habit_logs
     WHERE user_id = ${userId}
-      AND log_date >= (CURRENT_DATE - (${limit}::int - 1))
+      AND log_date >= (${today}::date - (${limit}::int - 1))
     ORDER BY log_date DESC
   `;
 }
@@ -7058,14 +7072,6 @@ async function findUserById(id) {
   const rows = await sql`SELECT id, email FROM users WHERE id = ${id}`;
   return rows[0] ?? null;
 }
-async function createUser(email, passwordHash) {
-  return sqlOne`
-    INSERT INTO users (email, password_hash)
-    VALUES (${email}, ${passwordHash})
-    ON CONFLICT ((lower(email))) DO NOTHING
-    RETURNING id, email
-  `;
-}
 async function createUserWithProfile(email, passwordHash, fullName) {
   const row = await sqlOne`
     WITH inserted AS (
@@ -7105,11 +7111,19 @@ async function createUserWithProfile(email, passwordHash, fullName) {
   };
 }
 
+// src/time.ts
+var APP_TIMEZONE = "Asia/Kuala_Lumpur";
+function todayInAppTz(now = /* @__PURE__ */ new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(now);
+}
+
 // src/routes/auth/demo.ts
-var DEMO_EMAIL = "lim.weijian@healthpath.demo";
-var DEMO_PASSWORD = "demo1234";
-var DEMO_PROFILE = {
-  email: DEMO_EMAIL,
+var DEMO_PROFILE_BASE = {
   fullName: "Lim Wei Jian",
   age: 48,
   gender: "male",
@@ -7138,24 +7152,28 @@ var DEMO_INSIGHTS = {
 };
 var demo_default = withRoute(["POST"], async (request) => {
   assertRateLimit(request, "auth-demo", { limit: 20, windowMs: 6e4 });
-  let user = await findUserByEmail(DEMO_EMAIL);
-  if (user === null) {
-    const created = await createUser(DEMO_EMAIL, await hashPassword(DEMO_PASSWORD));
-    const existing = created ?? await findUserByEmail(DEMO_EMAIL);
-    if (existing === null) throw new HttpError(500, "Could not provision the demo account");
-    user = { id: existing.id, email: existing.email, password_hash: "" };
-  } else if (!await verifyPassword(DEMO_PASSWORD, user.password_hash)) {
-    throw new HttpError(409, "The demo account password has been changed");
+  const sessionId = (0, import_node_crypto7.randomUUID)().replace(/-/g, "").slice(0, 12);
+  const email = `demo.${sessionId}@mysihat.demo`;
+  const passwordHash = await hashPassword((0, import_node_crypto7.randomUUID)());
+  const created = await createUserWithProfile(email, passwordHash, DEMO_PROFILE_BASE.fullName);
+  if (created === null) {
+    throw new HttpError(500, "Could not provision a demo session");
   }
-  const profile = await upsertProfile(user.id, {
-    ...DEMO_PROFILE,
-    activeActionIds: [...DEMO_PROFILE.activeActionIds]
+  const profile = await upsertProfile(created.user.id, {
+    ...DEMO_PROFILE_BASE,
+    email,
+    activeActionIds: [...DEMO_PROFILE_BASE.activeActionIds]
   });
-  const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-  await resetHabitLog(user.id, today);
-  await upsertInsights(user.id, { ...DEMO_INSIGHTS }, (/* @__PURE__ */ new Date()).toISOString());
-  const token = await signSessionToken({ userId: user.id, email: user.email });
-  return { token, user: { id: user.id, email: user.email }, profile };
+  const today = todayInAppTz();
+  await resetHabitLog(created.user.id, today);
+  await upsertInsights(created.user.id, { ...DEMO_INSIGHTS }, (/* @__PURE__ */ new Date()).toISOString());
+  const token = await signSessionToken({ userId: created.user.id, email: created.user.email });
+  return {
+    token,
+    user: { id: created.user.id, email: created.user.email },
+    profile,
+    demo: true
+  };
 });
 
 // src/validation.ts
@@ -7228,7 +7246,7 @@ function requireObject(body, field) {
 }
 function requireDateKey(value, field = "date") {
   if (value === void 0 || value === null || value === "") {
-    return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+    return todayInAppTz();
   }
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw badRequest(`"${field}" must be a date formatted YYYY-MM-DD`);
@@ -7309,7 +7327,11 @@ var history_default = withRoute(["GET"], async (request) => {
   const { userId } = await requireUser(request);
   const raw = request.query.days;
   const days = typeof raw === "string" ? Number.parseInt(raw, 10) : 7;
-  const logs = await listRecentHabitLogs(userId, Number.isFinite(days) ? days : 7);
+  const logs = await listRecentHabitLogs(
+    userId,
+    Number.isFinite(days) ? days : 7,
+    todayInAppTz()
+  );
   return { logs };
 });
 
@@ -7397,17 +7419,48 @@ function requireBoundedInt(payload, field, min, max) {
   }
   return parsed;
 }
+var ALLOWED_KEYS = /* @__PURE__ */ new Set([
+  "disclaimer",
+  "disclaimerBm",
+  "disclaimerZh",
+  "actualAge",
+  "healthAge",
+  "lifeExpectancy",
+  "overallRiskLevel",
+  "overallRiskScore",
+  "topRisk",
+  "risks",
+  "factors",
+  "peerComparison",
+  "peerComparisonBm",
+  "peerComparisonZh",
+  "topActions",
+  "habits",
+  "generatedAt",
+  "peerAverageHealthAge",
+  "healthAgeDelta",
+  "projectedHealthAgeFollowPlan",
+  "projectedHealthAgeNoChange",
+  "nationalComparisonHeadline",
+  "nationalComparisonHeadlineBm",
+  "nationalComparisonHeadlineZh"
+]);
 function parseInsightsPayload(body) {
   const payload = requireObject(body, "payload");
   const healthAge = requireBoundedInt(payload, "healthAge", 18, 100);
   const actualAge = requireBoundedInt(payload, "actualAge", 18, 100);
   const derivedDelta = Math.max(-10, Math.min(15, healthAge - actualAge));
-  return {
-    ...payload,
+  const out = {
     healthAge,
     actualAge,
     healthAgeDelta: derivedDelta
   };
+  for (const [key, value] of Object.entries(payload)) {
+    if (!ALLOWED_KEYS.has(key)) continue;
+    if (key === "healthAge" || key === "actualAge" || key === "healthAgeDelta") continue;
+    out[key] = value;
+  }
+  return out;
 }
 
 // src/routes/insights.ts
@@ -7418,7 +7471,7 @@ var insights_default = withRoute(["GET", "PUT"], async (request) => {
   }
   const body = jsonBody(request);
   const payload = parseInsightsPayload(body);
-  const generatedAt = optionalString(body, "generated_at") ?? (/* @__PURE__ */ new Date()).toISOString();
+  const generatedAt = (/* @__PURE__ */ new Date()).toISOString();
   return upsertInsights(userId, payload, generatedAt);
 });
 
@@ -7450,7 +7503,7 @@ function parseProfileInput(body, email, options = {}) {
   const parsedActions = parseOptionalActionIds(body.active_action_ids);
   const activeActionIds = parsedActions ?? options.existingActionIds ?? [];
   return {
-    email: optionalString(body, "email") ?? email,
+    email,
     fullName: requireString(body, "full_name", { max: 120 }),
     age: requireInt(body, "age", { min: 18, max: 90 }),
     gender: requireEnum(body, "gender", GENDERS),
@@ -7485,13 +7538,46 @@ var profile_default = withRoute(["GET", "PUT"], async (request) => {
 });
 
 // src/repositories/questionnaire.ts
-async function insertQuestionnaireResponse(userId, answers) {
+async function upsertProfileWithQuestionnaireAudit(userId, input, answers) {
   const row = await sqlOne`
+    WITH profile AS (
+      INSERT INTO profiles (
+        id, email, full_name, age, gender, state, activity_level, diet_habit,
+        smoking, height_cm, weight_kg, bmi, alcohol, sleep_hours,
+        high_blood_pressure, diabetes, onboarding_complete, locale, active_action_ids
+      ) VALUES (
+        ${userId}, ${input.email}, ${input.fullName}, ${input.age}, ${input.gender},
+        ${input.state}, ${input.activityLevel}, ${input.dietHabit}, ${input.smoking},
+        ${input.heightCm}, ${input.weightKg}, ${input.bmi}, ${input.alcohol}, ${input.sleepHours},
+        ${input.highBloodPressure}, ${input.diabetes}, ${input.onboardingComplete},
+        ${input.locale}, ${input.activeActionIds}
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        email               = EXCLUDED.email,
+        full_name           = EXCLUDED.full_name,
+        age                 = EXCLUDED.age,
+        gender              = EXCLUDED.gender,
+        state               = EXCLUDED.state,
+        activity_level      = EXCLUDED.activity_level,
+        diet_habit          = EXCLUDED.diet_habit,
+        smoking             = EXCLUDED.smoking,
+        height_cm           = EXCLUDED.height_cm,
+        weight_kg           = EXCLUDED.weight_kg,
+        bmi                 = EXCLUDED.bmi,
+        alcohol             = EXCLUDED.alcohol,
+        sleep_hours         = EXCLUDED.sleep_hours,
+        high_blood_pressure = EXCLUDED.high_blood_pressure,
+        diabetes            = EXCLUDED.diabetes,
+        onboarding_complete = EXCLUDED.onboarding_complete,
+        locale              = EXCLUDED.locale,
+        active_action_ids   = EXCLUDED.active_action_ids
+      RETURNING id
+    )
     INSERT INTO questionnaire_responses (user_id, answers)
-    VALUES (${userId}, ${JSON.stringify(answers)}::jsonb)
+    SELECT profile.id, ${JSON.stringify(answers)}::jsonb FROM profile
     RETURNING id, user_id, submitted_at
   `;
-  if (row === null) throw new Error("Failed to record questionnaire response");
+  if (row === null) throw new Error("Failed to save questionnaire and profile");
   return row;
 }
 
@@ -7502,21 +7588,42 @@ function pick(answers, ...keys) {
   }
   return void 0;
 }
+function requireAnswer(answers, keys, label) {
+  const value = pick(answers, ...keys);
+  if (value === void 0 || value === null || value === "") {
+    throw badRequest(`Questionnaire answers must include "${label}"`);
+  }
+  return value;
+}
+function assertQuestionnaireComplete(answers) {
+  requireAnswer(answers, ["age"], "age");
+  requireAnswer(answers, ["gender", "sex"], "gender");
+  requireAnswer(answers, ["smoking"], "smoking");
+  requireAnswer(answers, ["height_cm", "heightCm"], "heightCm");
+  requireAnswer(answers, ["weight_kg", "weightKg"], "weightKg");
+  requireAnswer(answers, ["activity_level", "activityLevel"], "activityLevel");
+  requireAnswer(answers, ["diet_habit", "dietHabit", "diet"], "diet");
+  requireAnswer(answers, ["alcohol"], "alcohol");
+  requireAnswer(answers, ["sleep_hours", "sleepHours"], "sleepHours");
+  requireAnswer(answers, ["high_blood_pressure", "highBloodPressure"], "highBloodPressure");
+  requireAnswer(answers, ["diabetes"], "diabetes");
+}
 function answersToProfileBody(answers, existing) {
+  assertQuestionnaireComplete(answers);
   const body = {
     full_name: existing?.full_name ?? pick(answers, "full_name", "fullName") ?? "MySihat user",
-    age: pick(answers, "age") ?? existing?.age ?? 30,
-    gender: pick(answers, "gender", "sex") ?? existing?.gender ?? "other",
+    age: pick(answers, "age"),
+    gender: pick(answers, "gender", "sex"),
     state: pick(answers, "state") ?? existing?.state ?? "Wilayah Persekutuan Kuala Lumpur",
-    activity_level: pick(answers, "activity_level", "activityLevel") ?? existing?.activity_level ?? "moderate",
-    diet_habit: pick(answers, "diet_habit", "dietHabit", "diet") ?? existing?.diet_habit ?? "average",
-    smoking: pick(answers, "smoking") ?? existing?.smoking ?? false,
-    height_cm: pick(answers, "height_cm", "heightCm") ?? existing?.height_cm ?? 165,
-    weight_kg: pick(answers, "weight_kg", "weightKg") ?? existing?.weight_kg ?? 65,
-    alcohol: pick(answers, "alcohol") ?? existing?.alcohol ?? "none",
-    sleep_hours: pick(answers, "sleep_hours", "sleepHours") ?? existing?.sleep_hours ?? 7,
-    high_blood_pressure: pick(answers, "high_blood_pressure", "highBloodPressure") ?? existing?.high_blood_pressure ?? false,
-    diabetes: pick(answers, "diabetes") ?? existing?.diabetes ?? false,
+    activity_level: pick(answers, "activity_level", "activityLevel"),
+    diet_habit: pick(answers, "diet_habit", "dietHabit", "diet"),
+    smoking: pick(answers, "smoking"),
+    height_cm: pick(answers, "height_cm", "heightCm"),
+    weight_kg: pick(answers, "weight_kg", "weightKg"),
+    alcohol: pick(answers, "alcohol"),
+    sleep_hours: pick(answers, "sleep_hours", "sleepHours"),
+    high_blood_pressure: pick(answers, "high_blood_pressure", "highBloodPressure"),
+    diabetes: pick(answers, "diabetes"),
     onboarding_complete: true,
     locale: pick(answers, "locale") ?? existing?.locale ?? "en"
   };
@@ -7525,23 +7632,30 @@ function answersToProfileBody(answers, existing) {
   }
   return body;
 }
-async function upsertProfileFromQuestionnaire(userId, email, answers) {
+async function saveQuestionnaireAndProfile(userId, email, answers) {
   const existing = await findProfile(userId);
   const body = answersToProfileBody(answers, existing);
   const input = parseProfileInput(body, email ?? existing?.email ?? null, {
     existingActionIds: existing?.active_action_ids ?? []
   });
-  await upsertProfile(userId, input);
-  return input;
+  const audit = await upsertProfileWithQuestionnaireAudit(userId, input, answers);
+  return {
+    profile: input,
+    questionnaireId: audit.id,
+    submittedAt: audit.submitted_at
+  };
 }
 
 // src/routes/questionnaire.ts
 var questionnaire_default = withRoute(["POST"], async (request, response) => {
   const { userId, email } = await requireUser(request);
   const answers = requireObject(jsonBody(request), "answers");
-  await upsertProfileFromQuestionnaire(userId, email, answers);
-  const row = await insertQuestionnaireResponse(userId, answers);
-  response.status(201).json(row);
+  const result = await saveQuestionnaireAndProfile(userId, email, answers);
+  response.status(201).json({
+    id: result.questionnaireId,
+    user_id: userId,
+    submitted_at: result.submittedAt
+  });
 });
 
 // src/data/random_forest_habits.json
@@ -7853,7 +7967,13 @@ var routes = {
   "/api/habits/today": today_default,
   "/api/habits/history": history_default,
   "/api/recommendations/rf": rf_default,
-  "/api/recommendations/llm": rf_default,
+  // Deprecated alias — prefer /api/recommendations/rf. Removal target: 2026-12-01.
+  "/api/recommendations/llm": async (request, response) => {
+    response.setHeader("Deprecation", "true");
+    response.setHeader("Sunset", "Sat, 01 Dec 2026 00:00:00 GMT");
+    response.setHeader("Link", '</api/recommendations/rf>; rel="successor-version"');
+    return rf_default(request, response);
+  },
   "/api/questionnaire": questionnaire_default,
   "/api/clinics": clinics_default,
   "/api/mortality-baselines": mortality_baselines_default

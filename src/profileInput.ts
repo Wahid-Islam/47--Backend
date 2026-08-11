@@ -23,6 +23,7 @@ export interface ParseProfileOptions {
 
 export function parseProfileInput(
   body: Record<string, unknown>,
+  /** Authenticated account email; body email is ignored. */
   email: string | null,
   options: ParseProfileOptions = {},
 ): ProfileInput {
@@ -43,11 +44,10 @@ export function parseProfileInput(
   }
 
   const parsedActions = parseOptionalActionIds(body.active_action_ids);
-  const activeActionIds =
-    parsedActions ?? options.existingActionIds ?? [];
+  const activeActionIds = parsedActions ?? options.existingActionIds ?? [];
 
   return {
-    email: optionalString(body, 'email') ?? email,
+    email,
     fullName: requireString(body, 'full_name', { max: 120 }),
     age: requireInt(body, 'age', { min: 18, max: 90 }),
     gender: requireEnum(body, 'gender', GENDERS),

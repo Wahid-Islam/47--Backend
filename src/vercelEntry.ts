@@ -58,7 +58,13 @@ const routes: Record<string, Handler> = {
   '/api/habits/today': today,
   '/api/habits/history': history,
   '/api/recommendations/rf': rf,
-  '/api/recommendations/llm': rf,
+  // Deprecated alias — prefer /api/recommendations/rf. Removal target: 2026-12-01.
+  '/api/recommendations/llm': async (request, response) => {
+    response.setHeader('Deprecation', 'true');
+    response.setHeader('Sunset', 'Sat, 01 Dec 2026 00:00:00 GMT');
+    response.setHeader('Link', '</api/recommendations/rf>; rel="successor-version"');
+    return rf(request, response);
+  },
   '/api/questionnaire': questionnaire,
   '/api/clinics': clinics,
   '/api/mortality-baselines': mortalityBaselines,

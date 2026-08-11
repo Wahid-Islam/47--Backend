@@ -1,19 +1,21 @@
-import { hashPassword, verifyPassword } from '../../auth/password';
+import { randomUUID } from 'node:crypto';
+
+import { hashPassword } from '../../auth/password';
 import { signSessionToken } from '../../auth/tokens';
 import { HttpError, withRoute } from '../../http';
 import { assertRateLimit } from '../../rateLimit';
 import { resetHabitLog } from '../../repositories/habits';
 import { upsertInsights } from '../../repositories/insights';
 import { upsertProfile } from '../../repositories/profiles';
-import { createUser, findUserByEmail } from '../../repositories/users';
+import { createUserWithProfile } from '../../repositories/users';
+import { todayInAppTz } from '../../time';
 
-/** POST /api/auth/demo — shared account; hard-resets seed state every session. */
+/**
+ * POST /api/auth/demo
+ * Creates a fresh temporary demo user per call so concurrent visitors do not share state.
+ */
 
-const DEMO_EMAIL = 'lim.weijian@healthpath.demo';
-const DEMO_PASSWORD = 'demo1234';
-
-const DEMO_PROFILE = {
-  email: DEMO_EMAIL,
+const DEMO_PROFILE_BASE = {
   fullName: 'Lim Wei Jian',
   age: 48,
   gender: 'male',
@@ -45,27 +47,31 @@ const DEMO_INSIGHTS = {
 export default withRoute(['POST'], async (request) => {
   assertRateLimit(request, 'auth-demo', { limit: 20, windowMs: 60_000 });
 
-  let user = await findUserByEmail(DEMO_EMAIL);
+  const sessionId = randomUUID().replace(/-/g, '').slice(0, 12);
+  const email = `demo.${sessionId}@mysihat.demo`;
+  const passwordHash = await hashPassword(randomUUID());
 
-  if (user === null) {
-    const created = await createUser(DEMO_EMAIL, await hashPassword(DEMO_PASSWORD));
-    const existing = created ?? (await findUserByEmail(DEMO_EMAIL));
-    if (existing === null) throw new HttpError(500, 'Could not provision the demo account');
-    user = { id: existing.id, email: existing.email, password_hash: '' };
-  } else if (!(await verifyPassword(DEMO_PASSWORD, user.password_hash))) {
-    throw new HttpError(409, 'The demo account password has been changed');
+  const created = await createUserWithProfile(email, passwordHash, DEMO_PROFILE_BASE.fullName);
+  if (created === null) {
+    throw new HttpError(500, 'Could not provision a demo session');
   }
 
-  const profile = await upsertProfile(user.id, {
-    ...DEMO_PROFILE,
-    activeActionIds: [...DEMO_PROFILE.activeActionIds],
+  const profile = await upsertProfile(created.user.id, {
+    ...DEMO_PROFILE_BASE,
+    email,
+    activeActionIds: [...DEMO_PROFILE_BASE.activeActionIds],
   });
 
-  const today = new Date().toISOString().slice(0, 10);
-  await resetHabitLog(user.id, today);
-  await upsertInsights(user.id, { ...DEMO_INSIGHTS }, new Date().toISOString());
+  const today = todayInAppTz();
+  await resetHabitLog(created.user.id, today);
+  await upsertInsights(created.user.id, { ...DEMO_INSIGHTS }, new Date().toISOString());
 
-  const token = await signSessionToken({ userId: user.id, email: user.email });
+  const token = await signSessionToken({ userId: created.user.id, email: created.user.email });
 
-  return { token, user: { id: user.id, email: user.email }, profile };
+  return {
+    token,
+    user: { id: created.user.id, email: created.user.email },
+    profile,
+    demo: true,
+  };
 });

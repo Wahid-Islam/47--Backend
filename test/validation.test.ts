@@ -4,7 +4,13 @@ import { describe, it } from 'node:test';
 import { parseActionIds, parseHabitIds } from '../src/catalog/ids';
 import { HttpError } from '../src/http';
 import { parseProfileInput } from '../src/profileInput';
+import { parseInsightsPayload } from '../src/services/insightsPayload';
+import {
+  answersToProfileBody,
+  assertQuestionnaireComplete,
+} from '../src/services/questionnaireToProfile';
 import { profileToFeatures } from '../src/services/randomForestRecommendations';
+import { todayInAppTz } from '../src/time';
 import { requireDateKey, requireEmail, requirePassword } from '../src/validation';
 
 const validProfile = {
@@ -101,10 +107,65 @@ describe('profile validation', () => {
     rejects(withoutName, 'full_name');
   });
 
+  it('ignores a caller-supplied profile email (auth email wins)', () => {
+    const parsed = parseProfileInput(
+      { ...validProfile, email: 'spoof@evil.example' },
+      'real@example.com',
+    );
+    assert.equal(parsed.email, 'real@example.com');
+  });
+
   it('ignores a caller-supplied id, so it cannot target another user', () => {
     const parsed = parseProfileInput({ ...validProfile, id: 'someone-else' }, null);
 
     assert.equal('id' in parsed, false);
+  });
+});
+
+describe('questionnaire completeness', () => {
+  it('rejects an empty answers object', () => {
+    assert.throws(() => assertQuestionnaireComplete({}), HttpError);
+    assert.throws(() => answersToProfileBody({}, null), HttpError);
+  });
+
+  it('accepts a complete camelCase answers payload', () => {
+    const body = answersToProfileBody(
+      {
+        age: 48,
+        sex: 'male',
+        smoking: true,
+        heightCm: 170,
+        weightKg: 79.2,
+        activityLevel: 'low',
+        diet: 'unhealthy',
+        alcohol: 'occasional',
+        sleepHours: 5.5,
+        highBloodPressure: true,
+        diabetes: false,
+      },
+      null,
+    );
+    assert.equal(body.onboarding_complete, true);
+    assert.equal(body.age, 48);
+    assert.equal(body.gender, 'male');
+  });
+});
+
+describe('insights payload', () => {
+  it('keeps allowlisted fields and drops unknown ones', () => {
+    const parsed = parseInsightsPayload({
+      payload: {
+        healthAge: 55,
+        actualAge: 48,
+        disclaimer: 'ok',
+        evilField: 'drop-me',
+      },
+    });
+    assert.equal(parsed.healthAge, 55);
+    assert.equal(parsed.actualAge, 48);
+    assert.equal(parsed.healthAgeDelta, 7);
+    assert.equal(parsed.disclaimer, 'ok');
+    assert.equal('evilField' in parsed, false);
   });
 });
 
@@ -132,8 +193,8 @@ describe('field validators', () => {
     assert.throws(() => requirePassword({ password: 'x'.repeat(201) }), HttpError);
   });
 
-  it('defaults a missing date to today and rejects invalid calendar dates', () => {
-    assert.match(requireDateKey(undefined), /^\d{4}-\d{2}-\d{2}$/);
+  it('defaults a missing date to Malaysia local today and rejects invalid calendar dates', () => {
+    assert.equal(requireDateKey(undefined), todayInAppTz());
     assert.equal(requireDateKey('2026-08-08'), '2026-08-08');
     assert.throws(() => requireDateKey('08/08/2026'), HttpError);
     assert.throws(() => requireDateKey('2026-13-45'), HttpError);

@@ -35,9 +35,8 @@ function isAllowedFrontendOrigin(origin: string): boolean {
     const url = new URL(origin);
     if (url.protocol !== 'https:') return false;
     const host = url.hostname;
-    if (host === 'mysihat-47.vercel.app' || host === '47-frontend.vercel.app') return true;
-    // Only Vercel preview hostnames for this frontend project.
-    return /^47-frontend-[a-z0-9-]+\.vercel\.app$/i.test(host);
+    // Known production hosts only. Preview origins must be listed in CORS_ALLOWED_ORIGINS.
+    return host === 'mysihat-47.vercel.app' || host === '47-frontend.vercel.app';
   } catch {
     return false;
   }

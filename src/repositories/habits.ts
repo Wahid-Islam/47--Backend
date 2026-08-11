@@ -50,13 +50,17 @@ export async function resetHabitLog(userId: string, logDate: string): Promise<Ha
   return setCompletedHabitIds(userId, logDate, []);
 }
 
-export async function listRecentHabitLogs(userId: string, days: number): Promise<HabitLogRow[]> {
+export async function listRecentHabitLogs(
+  userId: string,
+  days: number,
+  today: string,
+): Promise<HabitLogRow[]> {
   const limit = Math.max(1, Math.min(days, 30));
   return sql<HabitLogRow>`
     SELECT id, user_id, to_char(log_date, 'YYYY-MM-DD') AS log_date, completed_habit_ids
     FROM habit_logs
     WHERE user_id = ${userId}
-      AND log_date >= (CURRENT_DATE - (${limit}::int - 1))
+      AND log_date >= (${today}::date - (${limit}::int - 1))
     ORDER BY log_date DESC
   `;
 }
