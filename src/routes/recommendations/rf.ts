@@ -1,5 +1,4 @@
 import { HttpError, requireUser, withRoute } from '../../http';
-import { findInsights } from '../../repositories/insights';
 import { findProfile } from '../../repositories/profiles';
 import type { ProfileContext } from '../../services/profileContext';
 import {
@@ -8,14 +7,12 @@ import {
   recommendHabitsWithRandomForest,
 } from '../../services/randomForestRecommendations';
 
-/** GET /api/recommendations/rf */
+/** GET /api/recommendations/rf (also aliased as /api/recommendations/llm — deprecated). */
 export default withRoute(['GET'], async (request) => {
   const { userId } = await requireUser(request);
   const profile = await findProfile(userId);
   if (profile === null) throw new HttpError(404, 'Profile not found');
 
-  const insights = await findInsights(userId);
-  const payloadInsights = insights?.payload;
   const context: ProfileContext = {
     age: profile.age,
     gender: profile.gender,
@@ -26,10 +23,8 @@ export default withRoute(['GET'], async (request) => {
     alcohol: profile.alcohol,
     sleepHours: Number(profile.sleep_hours),
     highBloodPressure: profile.high_blood_pressure,
+    diabetes: profile.diabetes,
   };
-  if (typeof payloadInsights?.healthAge === 'number') {
-    context.healthAge = payloadInsights.healthAge;
-  }
 
   const rf = recommendHabitsWithRandomForest(context, 4);
   const habits = rf.habits.map((h) => {
@@ -50,9 +45,11 @@ export default withRoute(['GET'], async (request) => {
 
   return {
     habits,
-    coach_note: 'Your 4 actions are personalised from your questionnaire answers and health profile.',
+    coach_note:
+      'Your 4 actions are personalised from your saved health profile (questionnaire + onboarding answers).',
     coach_note_bm:
-      '4 tindakan anda diperibadikan daripada jawapan soal selidik dan profil kesihatan anda.',
-    coach_note_zh: '您的 4 项行动根据问卷回答与健康资料个性化生成。',
+      '4 tindakan anda diperibadikan daripada profil kesihatan tersimpan (soal selidik + onboarding).',
+    coach_note_zh: '您的 4 项行动根据已保存的健康资料（问卷与引导问答）个性化生成。',
+    algorithm: rf.algorithm,
   };
 });

@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import { parseActionIds, parseHabitIds } from '../src/catalog/ids';
 import { HttpError } from '../src/http';
 import { parseProfileInput } from '../src/profileInput';
+import { profileToFeatures } from '../src/services/randomForestRecommendations';
 import { requireDateKey, requireEmail, requirePassword } from '../src/validation';
 
 const validProfile = {
@@ -15,10 +17,11 @@ const validProfile = {
   smoking: true,
   height_cm: 170,
   weight_kg: 79.2,
-  bmi: 27.4,
+  bmi: 59,
   alcohol: 'occasional',
   sleep_hours: 5.5,
   high_blood_pressure: true,
+  diabetes: false,
   onboarding_complete: true,
   locale: 'en',
   active_action_ids: ['walk_20'],
@@ -42,19 +45,34 @@ describe('profile validation', () => {
 
     assert.equal(parsed.fullName, 'Lim Wei Jian');
     assert.equal(parsed.age, 48);
-    assert.equal(parsed.bmi, 27.4);
+    assert.ok(parsed.bmi > 27 && parsed.bmi < 28);
     assert.equal(parsed.heightCm, 170);
     assert.equal(parsed.alcohol, 'occasional');
     assert.equal(parsed.sleepHours, 5.5);
     assert.equal(parsed.email, 'fallback@example.com');
+    assert.equal(parsed.diabetes, false);
     assert.deepEqual(parsed.activeActionIds, ['walk_20']);
   });
 
-  it('derives BMI from height and weight when bmi is omitted', () => {
-    const { bmi: _omit, ...withoutBmi } = validProfile;
-    const parsed = parseProfileInput(withoutBmi, null);
-
+  it('always derives BMI from height and weight (ignores client bmi)', () => {
+    const parsed = parseProfileInput({ ...validProfile, bmi: 59 }, null);
     assert.ok(parsed.bmi > 27 && parsed.bmi < 28);
+    assert.notEqual(parsed.bmi, 59);
+  });
+
+  it('requires high_blood_pressure and diabetes', () => {
+    const { high_blood_pressure: _h, ...withoutBp } = validProfile;
+    rejects(withoutBp, 'high_blood_pressure');
+    const { diabetes: _d, ...withoutDiabetes } = validProfile;
+    rejects(withoutDiabetes, 'diabetes');
+  });
+
+  it('preserves existing action ids when the field is omitted', () => {
+    const { active_action_ids: _omit, ...withoutActions } = validProfile;
+    const parsed = parseProfileInput(withoutActions, null, {
+      existingActionIds: ['bp_screening', 'hydrate'],
+    });
+    assert.deepEqual(parsed.activeActionIds, ['bp_screening', 'hydrate']);
   });
 
   it('enforces age and body-measure bounds', () => {
@@ -90,6 +108,14 @@ describe('profile validation', () => {
   });
 });
 
+describe('id allowlists', () => {
+  it('rejects unknown habit and action identifiers', () => {
+    assert.throws(() => parseHabitIds(['not_a_habit']), HttpError);
+    assert.throws(() => parseActionIds(['not_an_action']), HttpError);
+    assert.deepEqual(parseHabitIds(['walk_20', 'walk_20']), ['walk_20']);
+  });
+});
+
 describe('field validators', () => {
   it('normalises email case', () => {
     assert.equal(requireEmail({ email: '  Lim@Example.COM ' }), 'lim@example.com');
@@ -106,10 +132,37 @@ describe('field validators', () => {
     assert.throws(() => requirePassword({ password: 'x'.repeat(201) }), HttpError);
   });
 
-  it('defaults a missing date to today and rejects bad formats', () => {
+  it('defaults a missing date to today and rejects invalid calendar dates', () => {
     assert.match(requireDateKey(undefined), /^\d{4}-\d{2}-\d{2}$/);
     assert.equal(requireDateKey('2026-08-08'), '2026-08-08');
     assert.throws(() => requireDateKey('08/08/2026'), HttpError);
     assert.throws(() => requireDateKey('2026-13-45'), HttpError);
+    assert.throws(() => requireDateKey('2026-02-30'), HttpError);
+  });
+});
+
+describe('gender feature encoding', () => {
+  it('encodes other separately from male', () => {
+    const names = [
+      'gender_male',
+      'gender_female',
+      'gender_other',
+    ];
+    const other = profileToFeatures(
+      {
+        age: 40,
+        gender: 'other',
+        activityLevel: 'moderate',
+        dietHabit: 'average',
+        smoking: false,
+        bmi: 24,
+        alcohol: 'none',
+        sleepHours: 7,
+        highBloodPressure: false,
+        diabetes: false,
+      },
+      names,
+    );
+    assert.deepEqual(other, [0, 0, 1]);
   });
 });

@@ -1,12 +1,15 @@
 import { verifyPassword } from '../../auth/password';
 import { signSessionToken } from '../../auth/tokens';
 import { HttpError, jsonBody, withRoute } from '../../http';
+import { assertRateLimit } from '../../rateLimit';
 import { createProfile, findProfile } from '../../repositories/profiles';
 import { findUserByEmail } from '../../repositories/users';
 import { requireEmail, requirePassword } from '../../validation';
 
 /** POST /api/auth/login */
 export default withRoute(['POST'], async (request) => {
+  assertRateLimit(request, 'auth-login', { limit: 30, windowMs: 60_000 });
+
   const body = jsonBody(request);
   const email = requireEmail(body);
   const password = requirePassword(body);

@@ -102,12 +102,13 @@ export function profileToFeatures(profile: ProfileContext, featureNames: string[
   const activity = profile.activityLevel;
   const diet = profile.dietHabit;
   const alcohol = profile.alcohol;
-  const healthAgeDelta =
-    typeof profile.healthAge === 'number' ? profile.healthAge - profile.age : 0;
+  const gender = profile.gender;
 
   const values: Record<string, number> = {
     age: profile.age,
-    gender_male: profile.gender === 'female' ? 0 : 1,
+    gender_male: gender === 'male' ? 1 : 0,
+    gender_female: gender === 'female' ? 1 : 0,
+    gender_other: gender === 'other' ? 1 : 0,
     activity_low: activity === 'low' ? 1 : 0,
     activity_moderate: activity === 'moderate' ? 1 : 0,
     activity_high: activity === 'high' ? 1 : 0,
@@ -121,7 +122,7 @@ export function profileToFeatures(profile: ProfileContext, featureNames: string[
     alcohol_regular: alcohol === 'regular' ? 1 : 0,
     sleep_hours: profile.sleepHours,
     high_bp: profile.highBloodPressure ? 1 : 0,
-    health_age_delta: healthAgeDelta,
+    diabetes: profile.diabetes ? 1 : 0,
   };
 
   return featureNames.map((name) => values[name] ?? 0);
@@ -143,6 +144,14 @@ export function recommendHabitsWithRandomForest(
   // Soft constraint: never push smoke-free to non-smokers.
   if (!profile.smoking) {
     scores.smoke_free_day = (scores.smoke_free_day ?? 0) - 1;
+  }
+
+  // Soft boost for diabetes-related diet / screening habits.
+  if (profile.diabetes) {
+    scores.no_sugary_drink = (scores.no_sugary_drink ?? 0) + 0.15;
+    scores.brown_rice_meal = (scores.brown_rice_meal ?? 0) + 0.12;
+    scores.drink_water = (scores.drink_water ?? 0) + 0.08;
+    scores.check_bp_reminder = (scores.check_bp_reminder ?? 0) + 0.1;
   }
 
   const ranked = Object.entries(scores)
@@ -233,12 +242,26 @@ export function reasonForHabit(id: string, profile: ProfileContext): { en: strin
       };
     case 'no_sugary_drink':
     case 'brown_rice_meal':
+      if (profile.diabetes) {
+        return {
+          en: 'With diagnosed diabetes on your profile, one steadier carb/sugar choice today is especially useful.',
+          bm: 'Dengan diabetes didiagnosis pada profil anda, satu pilihan karbohidrat/gula yang lebih stabil hari ini amat berguna.',
+          zh: '鉴于资料中已确诊糖尿病，今天做一个更稳妥的碳水/糖分选择特别有帮助。',
+        };
+      }
       return {
         en: `Your diet habit (${profile.dietHabit}) points to one healthier food choice today.`,
         bm: `Tabiat pemakanan anda (${profile.dietHabit}) mencadangkan satu pilihan makanan lebih sihat hari ini.`,
         zh: `根据您的饮食习惯（${profile.dietHabit}），今天做一次更健康的食物选择。`,
       };
     case 'check_bp_reminder':
+      if (profile.diabetes || profile.highBloodPressure) {
+        return {
+          en: 'Your chronic-condition profile makes blood-pressure awareness useful this week.',
+          bm: 'Profil keadaan kronik anda menjadikan kesedaran tekanan darah berguna minggu ini.',
+          zh: '结合您的慢性病资料，本周关注血压很有帮助。',
+        };
+      }
       return {
         en: 'Your age and heart-risk context make blood-pressure awareness useful this week.',
         bm: 'Umur dan konteks risiko jantung anda menjadikan kesedaran tekanan darah berguna minggu ini.',
@@ -252,9 +275,9 @@ export function reasonForHabit(id: string, profile: ProfileContext): { en: strin
       };
     default:
       return {
-        en: 'Selected from your questionnaire answers to personalise today’s plan.',
-        bm: 'Dipilih daripada jawapan soal selidik anda untuk memperibadikan pelan hari ini.',
-        zh: '根据您的问卷回答个性化选出，用于今天的计划。',
+        en: 'Selected from your saved health profile to personalise today’s plan.',
+        bm: 'Dipilih daripada profil kesihatan tersimpan anda untuk memperibadikan pelan hari ini.',
+        zh: '根据您已保存的健康资料个性化选出，用于今天的计划。',
       };
   }
 }

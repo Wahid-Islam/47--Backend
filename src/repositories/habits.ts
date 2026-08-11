@@ -7,14 +7,25 @@ export interface HabitLogRow {
   completed_habit_ids: string[];
 }
 
+export async function findHabitLog(userId: string, logDate: string): Promise<HabitLogRow | null> {
+  return sqlOne<HabitLogRow>`
+    SELECT id, user_id, to_char(log_date, 'YYYY-MM-DD') AS log_date, completed_habit_ids
+    FROM habit_logs
+    WHERE user_id = ${userId} AND log_date = ${logDate}::date
+  `;
+}
+
 export async function getOrCreateHabitLog(userId: string, logDate: string): Promise<HabitLogRow> {
-  const row = await sqlOne<HabitLogRow>`
+  const existing = await findHabitLog(userId, logDate);
+  if (existing !== null) return existing;
+
+  await sql`
     INSERT INTO habit_logs (user_id, log_date)
     VALUES (${userId}, ${logDate}::date)
-    ON CONFLICT (user_id, log_date) DO UPDATE SET
-      completed_habit_ids = habit_logs.completed_habit_ids
-    RETURNING id, user_id, to_char(log_date, 'YYYY-MM-DD') AS log_date, completed_habit_ids
+    ON CONFLICT (user_id, log_date) DO NOTHING
   `;
+
+  const row = await findHabitLog(userId, logDate);
   if (row === null) throw new Error('Failed to load habit log');
   return row;
 }
@@ -33,6 +44,10 @@ export async function setCompletedHabitIds(
   `;
   if (row === null) throw new Error('Failed to save habit log');
   return row;
+}
+
+export async function resetHabitLog(userId: string, logDate: string): Promise<HabitLogRow> {
+  return setCompletedHabitIds(userId, logDate, []);
 }
 
 export async function listRecentHabitLogs(userId: string, days: number): Promise<HabitLogRow[]> {

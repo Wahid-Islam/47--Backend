@@ -1,4 +1,9 @@
-"""Train a Random Forest that ranks daily habits from questionnaire features."""
+"""Train a Random Forest that ranks daily habits from questionnaire features.
+
+This is a rules-based wellness prototype: synthetic profiles are labelled by a
+hand-written teacher, then the forest approximates those labels. Metrics measure
+agreement with the teacher — not clinical validity.
+"""
 
 from __future__ import annotations
 
@@ -23,6 +28,8 @@ HABIT_IDS = [
 FEATURE_NAMES = [
     "age",
     "gender_male",
+    "gender_female",
+    "gender_other",
     "activity_low",
     "activity_moderate",
     "activity_high",
@@ -36,7 +43,7 @@ FEATURE_NAMES = [
     "alcohol_regular",
     "sleep_hours",
     "high_bp",
-    "health_age_delta",
+    "diabetes",
 ]
 
 OUT_PATH = Path(__file__).resolve().parents[1] / "src" / "data" / "random_forest_habits.json"
@@ -74,6 +81,13 @@ def teacher_scores(row: dict[str, float]) -> list[float]:
     if row["high_bp"] > 0.5 or row["age"] >= 45:
         scores["check_bp_reminder"] += 0.35
 
+    if row["diabetes"] > 0.5:
+        scores["no_sugary_drink"] += 0.35
+        scores["brown_rice_meal"] += 0.3
+        scores["drink_water"] += 0.15
+        scores["check_bp_reminder"] += 0.2
+        scores["walk_20"] += 0.1
+
     if row["bmi"] >= 25:
         scores["walk_20"] += 0.15
         scores["no_sugary_drink"] += 0.1
@@ -83,17 +97,13 @@ def teacher_scores(row: dict[str, float]) -> list[float]:
         scores["drink_water"] += 0.25
         scores["sleep_7"] += 0.1
 
-    if row["health_age_delta"] >= 3:
-        scores["walk_20"] += 0.1
-        scores["sleep_7"] += 0.1
-
     # Tiny noise so the forest isn't a perfect memoriser of the teacher.
     return [float(np.clip(scores[h] + NP_RNG.normal(0, 0.03), 0.0, 1.0)) for h in HABIT_IDS]
 
 
 def sample_row() -> dict[str, float]:
     age = RNG.randint(18, 75)
-    gender_male = 1.0 if RNG.random() < 0.55 else 0.0
+    gender = RNG.choices(["male", "female", "other"], weights=[0.48, 0.48, 0.04], k=1)[0]
     activity = RNG.choices(["low", "moderate", "high"], weights=[0.4, 0.4, 0.2], k=1)[0]
     diet = RNG.choices(["unhealthy", "average", "healthy"], weights=[0.35, 0.4, 0.25], k=1)[0]
     smoking = 1.0 if RNG.random() < 0.28 else 0.0
@@ -101,11 +111,13 @@ def sample_row() -> dict[str, float]:
     alcohol = RNG.choices(["none", "occasional", "regular"], weights=[0.55, 0.3, 0.15], k=1)[0]
     sleep_hours = float(np.clip(NP_RNG.normal(6.8, 1.4), 3, 12))
     high_bp = 1.0 if (age >= 50 and RNG.random() < 0.35) or RNG.random() < 0.12 else 0.0
-    health_age_delta = float(np.clip(NP_RNG.normal(2 if smoking or activity == "low" else 0, 3), -8, 15))
+    diabetes = 1.0 if (age >= 45 and RNG.random() < 0.22) or RNG.random() < 0.08 else 0.0
 
     return {
         "age": float(age),
-        "gender_male": gender_male,
+        "gender_male": 1.0 if gender == "male" else 0.0,
+        "gender_female": 1.0 if gender == "female" else 0.0,
+        "gender_other": 1.0 if gender == "other" else 0.0,
         "activity_low": 1.0 if activity == "low" else 0.0,
         "activity_moderate": 1.0 if activity == "moderate" else 0.0,
         "activity_high": 1.0 if activity == "high" else 0.0,
@@ -119,7 +131,7 @@ def sample_row() -> dict[str, float]:
         "alcohol_regular": 1.0 if alcohol == "regular" else 0.0,
         "sleep_hours": sleep_hours,
         "high_bp": high_bp,
-        "health_age_delta": health_age_delta,
+        "diabetes": diabetes,
     }
 
 
@@ -154,13 +166,11 @@ def main() -> None:
     )
     model.fit(X, Y)
 
-    # Hold-out style check on a small batch.
     test_rows = [sample_row() for _ in range(200)]
     Xt = np.array([[r[n] for n in FEATURE_NAMES] for r in test_rows])
     Yt = np.array([teacher_scores(r) for r in test_rows])
     pred = model.predict(Xt)
     mae = float(np.mean(np.abs(pred - Yt)))
-    # Top-1 habit agreement rate.
     agree = float(np.mean(np.argmax(pred, axis=1) == np.argmax(Yt, axis=1)))
 
     forests = []
@@ -168,7 +178,7 @@ def main() -> None:
         forests.append([export_tree(tree) for tree in estimator.estimators_])
 
     payload = {
-        "version": 1,
+        "version": 2,
         "algorithm": "sklearn.ensemble.RandomForestRegressor + MultiOutputRegressor",
         "habit_ids": HABIT_IDS,
         "feature_names": FEATURE_NAMES,
@@ -176,13 +186,13 @@ def main() -> None:
         "max_depth": 8,
         "train_samples": n,
         "metrics": {"mae": mae, "top1_habit_agreement": agree},
+        "notes": "Synthetic teacher labels only — wellness prototype, not clinical advice.",
         "forests": forests,
     }
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(json.dumps(payload), encoding="utf-8")
-    print(f"Wrote {OUT_PATH}")
-    print(f"MAE={mae:.4f} top1_agreement={agree:.3f}")
+    print(f"Wrote {OUT_PATH} (mae={mae:.4f}, top1={agree:.3f})")
 
 
 if __name__ == "__main__":

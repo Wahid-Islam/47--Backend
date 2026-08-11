@@ -10,6 +10,9 @@ export default withRoute(['GET', 'PUT'], async (request) => {
     return findProfile(userId);
   }
 
-  const input = parseProfileInput(jsonBody(request), email);
+  const existing = await findProfile(userId);
+  const input = parseProfileInput(jsonBody(request), email, {
+    existingActionIds: existing?.active_action_ids ?? [],
+  });
   return upsertProfile(userId, input);
 });

@@ -8,6 +8,6 @@ export interface ProfileContext {
   alcohol: string;
   sleepHours: number;
   highBloodPressure: boolean;
-  healthAge?: number;
+  diabetes: boolean;
   topRisks?: string[];
 }

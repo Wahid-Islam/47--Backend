@@ -104,7 +104,7 @@ export function requireObject(body: Record<string, unknown>, field: string): Rec
   return value as Record<string, unknown>;
 }
 
-/** Validates a `YYYY-MM-DD` date, defaulting to today in UTC. */
+/** Validates a real calendar `YYYY-MM-DD` date, defaulting to today in UTC. */
 export function requireDateKey(value: unknown, field = 'date'): string {
   if (value === undefined || value === null || value === '') {
     return new Date().toISOString().slice(0, 10);
@@ -112,6 +112,17 @@ export function requireDateKey(value: unknown, field = 'date'): string {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw badRequest(`"${field}" must be a date formatted YYYY-MM-DD`);
   }
-  if (Number.isNaN(Date.parse(value))) throw badRequest(`"${field}" is not a real date`);
+  const [yearText, monthText, dayText] = value.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  if (
+    utc.getUTCFullYear() !== year ||
+    utc.getUTCMonth() !== month - 1 ||
+    utc.getUTCDate() !== day
+  ) {
+    throw badRequest(`"${field}" is not a real calendar date`);
+  }
   return value;
 }
